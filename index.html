@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insurance Premium AI Underwriting Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%); }
+    .card-glow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01); }
+    .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <!-- Header -->
+  <header class="gradient-header text-white py-6 px-4 sm:px-8 shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400 text-xl font-bold">
+            <i class="fa-solid fa-shield-heart"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-extrabold tracking-tight">Actuarial AI • Retrained Premium Engine</h1>
+            <p class="text-xs text-slate-300">Dual-Cohort Production Machine Learning Inference Engine</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Pipeline Status Indicators -->
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+          Backend: FastAPI Active
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium">
+          <i class="fa-solid fa-code-branch"></i> Young Pipeline: R² 98.87%
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">
+          <i class="fa-solid fa-bolt"></i> Rest Pipeline: R² 99.71%
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8">
+
+    <!-- Preset Profiles Quick-Bar -->
+    <div class="mb-8 p-4 bg-white rounded-2xl card-glow border border-slate-200/80">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+        <div class="flex items-center gap-2 text-sm font-bold text-slate-700">
+          <i class="fa-solid fa-wand-magic-sparkles text-blue-600"></i>
+          <span>1-Click Preset Applicant Test Profiles</span>
+        </div>
+        <span class="text-xs text-slate-500">Click any profile below to immediately populate parameters</span>
+      </div>
+      <div id="presets-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+
+    <!-- Two-Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- Left Column: Input Form (7 cols) -->
+      <div class="lg:col-span-7 bg-white p-6 sm:p-8 rounded-2xl card-glow border border-slate-200/80">
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-blue-600"></i> Policyholder Underwriting Data
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">Parameters are sanitized, scaled, and routed dynamically to the optimal model</p>
+          </div>
+          <!-- Real-time Cohort Badge -->
+          <div id="cohort-preview-badge" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Young Cohort (≤ 25)
+          </div>
+        </div>
+
+        <form id="premium-form" class="space-y-6">
+          <!-- Age & Dependants -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">Age (Years)</label>
+                <span id="age-display" class="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">22</span>
+              </div>
+              <input type="range" id="age" min="18" max="85" value="22" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+              <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                <span>18 (Min)</span>
+                <span class="font-semibold text-blue-500">25 (Cohort Split)</span>
+                <span>85 (Max)</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Number of Dependants</label>
+              <select id="dependants" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                <option value="0">0 Dependants (Single / Independent)</option>
+                <option value="1">1 Dependant</option>
+                <option value="2">2 Dependants</option>
+                <option value="3">3 Dependants</option>
+                <option value="4">4 Dependants</option>
+                <option value="5">5+ Dependants</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Feature Spotlight: Genetic Risk (The Retraining Breakthrough) -->
+          <div class="p-4 rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-slate-50 border border-blue-200/70">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-dna text-indigo-600"></i>
+                <label class="text-xs font-bold text-slate-800 uppercase tracking-wider">Hereditary Genetic Risk Score</label>
+                <span class="text-[10px] bg-indigo-600 text-white font-bold px-1.5 py-0.5 rounded">Retrained Feature</span>
+              </div>
+              <span id="genetic-risk-display" class="text-sm font-bold text-indigo-700 bg-white shadow-sm px-2.5 py-0.5 rounded-lg border border-indigo-100">Score: 2 / 5</span>
+            </div>
+            <input type="range" id="genetical_risk" min="0" max="5" value="2" step="1" class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 mt-2">
+            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+              <span>0 (No Family Predisposition)</span>
+              <span>3 (Moderate Risk)</span>
+              <span>5 (High Genetic Vulnerability)</span>
+            </div>
+            <p id="gr-explanation" class="text-[11px] text-indigo-900/80 mt-2">
+              💡 <strong>Actuarial Breakthrough:</strong> Incorporating this hereditary index resolved the baseline model's 30% failure rate for young policyholders.
+            </p>
+          </div>
+
+          <!-- Insurance Plan & Income -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Insurance Coverage Plan</label>
+              <div class="grid grid-cols-3 gap-2">
+                <label class="plan-card cursor-pointer border rounded-xl p-2.5 text-center transition border-slate-200 hover:border-amber-400">
+                  <input type="radio" name="plan" value="Bronze" class="sr-only">
+                  <div class="text-xs font-bold text-amber-700">Bronze</div>
+                  <div class="text-[10px] text-slate-500">Basic</div>
+                </label>
+                <label class="plan-card cursor-pointer border rounded-xl p-2.5 text-center transition border-blue-500 bg-blue-50/50 ring-2 ring-blue-500">
+                  <input type="radio" name="plan" value="Silver" checked class="sr-only">
+                  <div class="text-xs font-bold text-slate-700">Silver</div>
+                  <div class="text-[10px] text-slate-500">Popular</div>
+                </label>
+                <label class="plan-card cursor-pointer border rounded-xl p-2.5 text-center transition border-slate-200 hover:border-yellow-400">
+                  <input type="radio" name="plan" value="Gold" class="sr-only">
+                  <div class="text-xs font-bold text-yellow-600">Gold</div>
+                  <div class="text-[10px] text-slate-500">Premium</div>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">Annual Income (₹ Lakhs)</label>
+                <span id="income-display" class="text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">₹14 L</span>
+              </div>
+              <input type="range" id="income_lakhs" min="1" max="100" value="14" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+              <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                <span>₹1 Lakh</span>
+                <span>₹50 Lakhs</span>
+                <span>₹100 Lakhs</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Medical History & BMI Category -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Clinical Diagnoses / Medical History</label>
+              <select id="medical_history" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                <option value="No Disease">No Pre-existing Disease</option>
+                <option value="Diabetes">Diabetes</option>
+                <option value="High Blood Pressure">High Blood Pressure</option>
+                <option value="Thyroid">Thyroid</option>
+                <option value="Heart Disease">Heart Disease</option>
+                <option value="Diabetes & High Blood Pressure">Diabetes & High Blood Pressure</option>
+                <option value="Diabetes & Heart Disease">Diabetes & Heart Disease (High Severity)</option>
+                <option value="High Blood Pressure & Heart Disease">High Blood Pressure & Heart Disease</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Body Mass Index (BMI)</label>
+              <select id="bmi_category" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                <option value="Normal">Normal (BMI 18.5 - 24.9)</option>
+                <option value="Overweight">Overweight (BMI 25 - 29.9)</option>
+                <option value="Obesity">Obesity (BMI ≥ 30)</option>
+                <option value="Underweight">Underweight (BMI < 18.5)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Lifestyle & Demographics -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Smoking Status</label>
+              <select id="smoking_status" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                <option value="No">Non-Smoker</option>
+                <option value="Occasional">Occasional</option>
+                <option value="Regular">Regular Smoker</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Employment</label>
+              <select id="employment_status" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                <option value="Salaried">Salaried</option>
+                <option value="Self-Employed">Self-Employed</option>
+                <option value="Freelancer">Freelancer</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Region</label>
+              <select id="region" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                <option value="Northwest">Northwest</option>
+                <option value="Northeast">Northeast</option>
+                <option value="Southeast">Southeast</option>
+                <option value="Southwest">Southwest</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Gender & Marital -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Gender</label>
+              <select id="gender" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Marital Status</label>
+              <select id="marital_status" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                <option value="Unmarried">Unmarried</option>
+                <option value="Married">Married</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="button" id="calculate-btn" class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-calculator"></i>
+            <span>Calculate Instant Underwriting Premium</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Right Column: Results & Actuarial Dashboard (5 cols) -->
+      <div class="lg:col-span-5 space-y-6">
+
+        <!-- Live Quote Card -->
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 sm:p-7 rounded-2xl shadow-xl relative overflow-hidden border border-slate-700">
+          <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl"></div>
+
+          <div class="flex items-center justify-between text-xs text-slate-300 pb-3 border-b border-slate-700/60">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-calculator text-blue-400"></i> Actuarial Calculated Quote
+            </span>
+            <span id="model-pill" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              Linear Reg (Young)
+            </span>
+          </div>
+
+          <div class="py-5">
+            <div class="text-xs uppercase tracking-wider text-slate-400 font-medium">Estimated Annual Premium</div>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white" id="premium-amount">₹7,840</span>
+              <span class="text-sm font-semibold text-slate-400">/ year</span>
+            </div>
+            <div class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+              <span>Confidence:</span>
+              <span id="r2-score-tag" class="font-bold text-emerald-400">R² = 98.87%</span>
+              <span class="text-slate-500">•</span>
+              <span id="extreme-error-tag" class="text-blue-300 font-medium">2.14% extreme error</span>
+            </div>
+          </div>
+
+          <!-- Cohort Routing Explanation -->
+          <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs">
+            <div class="font-semibold text-blue-300 flex items-center gap-1.5 mb-1">
+              <i class="fa-solid fa-microchip"></i>
+              <span id="dispatched-model-title">Dispatched Model</span>
+            </div>
+            <p id="dispatched-model-desc" class="text-slate-300 text-[11px] leading-relaxed">
+              Customer age is ≤ 25. Dispatched to the specialized Young Cohort Linear Regression model enriched with Hereditary Genetic Risk.
+            </p>
+          </div>
+        </div>
+
+        <!-- Flawed Baseline vs New Model Comparison -->
+        <div class="bg-white p-5 rounded-2xl card-glow border border-slate-200">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-code-compare text-amber-500"></i> Baseline Error Shield
+            </h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Retraining Audit</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-center mb-3">
+            <div class="p-3 rounded-xl bg-rose-50 border border-rose-100">
+              <div class="text-[10px] uppercase font-bold text-rose-600">Old Unified Baseline</div>
+              <div id="baseline-quote-amount" class="text-lg font-extrabold text-rose-700 mt-0.5">₹11,400</div>
+              <div class="text-[10px] text-rose-500 font-medium">30% Extreme Errors</div>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+              <div class="text-[10px] uppercase font-bold text-emerald-600">Retrained Dual Engine</div>
+              <div id="retrained-quote-amount" class="text-lg font-extrabold text-emerald-700 mt-0.5">₹7,840</div>
+              <div class="text-[10px] text-emerald-500 font-medium">Mispricing Prevented</div>
+            </div>
+          </div>
+          <p id="baseline-comparison-text" class="text-[11px] text-slate-600 leading-relaxed">
+            The old single model would have mispriced this customer due to lack of cohort separation.
+          </p>
+        </div>
+
+        <!-- Pricing Component Chart -->
+        <div class="bg-white p-5 rounded-2xl card-glow border border-slate-200">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-chart-pie text-blue-500"></i> Actuarial Price Breakdown
+            </h3>
+          </div>
+          <div class="h-44 relative">
+            <canvas id="breakdownChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Frontend Logic -->
+  <script>
+    let breakdownChart = null;
+
+    // Plan selector styling
+    document.querySelectorAll('input[name="plan"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.querySelectorAll('.plan-card').forEach(card => {
+          card.classList.remove('border-blue-500', 'bg-blue-50/50', 'ring-2', 'ring-blue-500');
+          card.classList.add('border-slate-200');
+        });
+        const parent = radio.closest('.plan-card');
+        parent.classList.remove('border-slate-200');
+        parent.classList.add('border-blue-500', 'bg-blue-50/50', 'ring-2', 'ring-blue-500');
+        calculateQuote();
+      });
+    });
+
+    // Inputs real-time listener
+    const ageInput = document.getElementById('age');
+    const ageDisplay = document.getElementById('age-display');
+    const incomeInput = document.getElementById('income_lakhs');
+    const incomeDisplay = document.getElementById('income-display');
+    const grInput = document.getElementById('genetical_risk');
+    const grDisplay = document.getElementById('genetic-risk-display');
+    const cohortBadge = document.getElementById('cohort-preview-badge');
+
+    ageInput.addEventListener('input', (e) => {
+      const age = parseInt(e.target.value);
+      ageDisplay.textContent = age;
+      updateCohortPreview(age);
+      calculateQuote();
+    });
+
+    incomeInput.addEventListener('input', (e) => {
+      incomeDisplay.textContent = `₹${e.target.value} L`;
+      calculateQuote();
+    });
+
+    grInput.addEventListener('input', (e) => {
+      grDisplay.textContent = `Score: ${e.target.value} / 5`;
+      calculateQuote();
+    });
+
+    ['dependants', 'medical_history', 'bmi_category', 'smoking_status', 'employment_status', 'region', 'gender', 'marital_status'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => calculateQuote());
+    });
+
+    document.getElementById('calculate-btn').addEventListener('click', () => calculateQuote());
+
+    function updateCohortPreview(age) {
+      if (age <= 25) {
+        cohortBadge.textContent = 'Young Cohort (≤ 25)';
+        cohortBadge.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
+      } else {
+        cohortBadge.textContent = 'Rest Cohort (> 25)';
+        cohortBadge.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200';
+      }
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('breakdownChart').getContext('2d');
+      breakdownChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Base Risk', 'Genetic Risk', 'Policy Tier', 'Lifestyle'],
+          datasets: [{
+            data: [3000, 2000, 2500, 800],
+            backgroundColor: ['#94a3b8', '#6366f1', '#3b82f6', '#f59e0b'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } }
+          },
+          cutout: '68%'
+        }
+      });
+    }
+
+    async function loadPresets() {
+      try {
+        const resp = await fetch('/api/sample-profiles');
+        const profiles = await resp.json();
+        const container = document.getElementById('presets-container');
+        container.innerHTML = '';
+
+        profiles.forEach(p => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'text-left p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 transition group';
+          btn.innerHTML = `
+            <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600 flex items-center justify-between">
+              <span>${p.label}</span>
+              <i class="fa-solid fa-arrow-right text-[10px] text-slate-300 group-hover:text-blue-500"></i>
+            </div>
+            <div class="text-[10px] text-slate-500 mt-0.5 line-clamp-1">${p.description}</div>
+          `;
+          btn.addEventListener('click', () => applyProfile(p.data));
+          container.appendChild(btn);
+        });
+      } catch (err) {
+        console.error('Failed to load presets:', err);
+      }
+    }
+
+    function applyProfile(data) {
+      ageInput.value = data.age;
+      ageDisplay.textContent = data.age;
+      updateCohortPreview(data.age);
+
+      incomeInput.value = data.income_lakhs;
+      incomeDisplay.textContent = `₹${data.income_lakhs} L`;
+
+      grInput.value = data.genetical_risk;
+      grDisplay.textContent = `Score: ${data.genetical_risk} / 5`;
+
+      document.getElementById('dependants').value = data.number_of_dependants;
+      document.getElementById('medical_history').value = data.medical_history;
+      document.getElementById('bmi_category').value = data.bmi_category;
+      document.getElementById('smoking_status').value = data.smoking_status;
+      document.getElementById('employment_status').value = data.employment_status;
+      document.getElementById('region').value = data.region;
+      document.getElementById('gender').value = data.gender;
+      document.getElementById('marital_status').value = data.marital_status;
+
+      // Select plan radio
+      const planRadio = document.querySelector(`input[name="plan"][value="${data.insurance_plan}"]`);
+      if (planRadio) {
+        planRadio.checked = true;
+        planRadio.dispatchEvent(new Event('change'));
+      }
+
+      calculateQuote();
+    }
+
+    async function calculateQuote() {
+      const selectedPlan = document.querySelector('input[name="plan"]:checked')?.value || 'Silver';
+      
+      const payload = {
+        age: parseInt(ageInput.value),
+        gender: document.getElementById('gender').value,
+        region: document.getElementById('region').value,
+        marital_status: document.getElementById('marital_status').value,
+        number_of_dependants: parseInt(document.getElementById('dependants').value),
+        bmi_category: document.getElementById('bmi_category').value,
+        smoking_status: document.getElementById('smoking_status').value,
+        employment_status: document.getElementById('employment_status').value,
+        income_lakhs: parseFloat(incomeInput.value),
+        medical_history: document.getElementById('medical_history').value,
+        insurance_plan: selectedPlan,
+        genetical_risk: parseInt(grInput.value)
+      };
+
+      try {
+        const resp = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) throw new Error('Prediction API failed');
+        const data = await resp.json();
+
+        // Update UI
+        document.getElementById('premium-amount').textContent = `₹${data.estimated_annual_premium.toLocaleString('en-IN')}`;
+        document.getElementById('model-pill').textContent = data.routing_decision.is_young_cohort ? 'Linear Reg (Young)' : 'XGBoost (Rest)';
+        document.getElementById('r2-score-tag').textContent = data.routing_decision.r2_score;
+        document.getElementById('extreme-error-tag').textContent = `${data.routing_decision.extreme_error_rate}`;
+        document.getElementById('dispatched-model-title').textContent = data.routing_decision.model_dispatched;
+        document.getElementById('dispatched-model-desc').textContent = data.routing_decision.underwriting_rationale;
+
+        // Baseline comparison
+        document.getElementById('baseline-quote-amount').textContent = `₹${data.baseline_comparison.flawed_baseline_quote.toLocaleString('en-IN')}`;
+        document.getElementById('retrained-quote-amount').textContent = `₹${data.estimated_annual_premium.toLocaleString('en-IN')}`;
+        document.getElementById('baseline-comparison-text').textContent = 
+          `Without demographic segmentation and genetic risk discovery, the baseline model would produce an erroneous quote (${data.baseline_comparison.retraining_correction_pct}).`;
+
+        // Update Chart
+        if (breakdownChart) {
+          const comps = data.pricing_components;
+          breakdownChart.data.datasets[0].data = [
+            comps.base_coverage,
+            comps.genetic_risk_contribution,
+            comps.policy_tier_contribution,
+            comps.lifestyle_surcharges
+          ];
+          breakdownChart.update();
+        }
+      } catch (err) {
+        console.error('Calculation error:', err);
+      }
+    }
+
+    // Startup
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      loadPresets();
+      setTimeout(calculateQuote, 400);
+    });
+  </script>
+</body>
+</html>
