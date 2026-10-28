@@ -1,478 +1,747 @@
 """
-streamlit_app.py - Production Streamlit Application for Dual-Cohort Insurance Premium Prediction Engine
+ApexShield | Premium Health Insurance Quotation Engine
+Final production build — elegant, minimal, professional.
 """
 import os
 import joblib
-import numpy as np
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
 
-# --- Page Configuration ---
+# ─────────────────────────────────────────────
+# 1.  PAGE CONFIG
+# ─────────────────────────────────────────────
 st.set_page_config(
-    page_title="Insurance Premium Retrained Engine",
+    page_title="ApexShield · Instant Health Insurance Quote",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed",
 )
 
-# --- Custom Styling ---
+# ─────────────────────────────────────────────
+# 2.  GLOBAL CSS  (rich but restrained palette)
+#     Deep navy + warm gold + soft champagne
+# ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    .main-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        background: linear-gradient(120deg, #1e3a8a, #0284c7);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.2rem;
-    }
-    .sub-title {
-        color: #475569;
-        font-size: 0.95rem;
-        margin-bottom: 1.5rem;
-    }
-    .metric-card {
-        background: white;
-        padding: 1.25rem;
-        border-radius: 1rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }
-    .badge-young {
-        background-color: #ecfdf5;
-        color: #047857;
-        border: 1px solid #a7f3d0;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        display: inline-block;
-    }
-    .badge-rest {
-        background-color: #eef2ff;
-        color: #4338ca;
-        border: 1px solid #c7d2fe;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        display: inline-block;
-    }
-    .highlight-box {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 1rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-    .stButton>button {
-        border-radius: 0.75rem;
-        font-weight: 600;
-    }
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap');
+
+/* ── Reset & Root ── */
+:root {
+    --navy:       #0B1829;
+    --navy-mid:   #122039;
+    --navy-soft:  #1A2E4A;
+    --gold:       #C9973B;
+    --gold-light: #E8BE6C;
+    --champagne:  #F9F4EC;
+    --slate:      #64748B;
+    --slate-lt:   #94A3B8;
+    --border:     #E2E8F0;
+    --white:      #FFFFFF;
+    --success:    #059669;
+}
+
+html, body, [class*="css"] {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--navy);
+}
+.stApp { background: var(--champagne); }
+
+/* ── Hide Streamlit chrome ── */
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding-top: 0 !important; }
+
+/* ── Navbar ── */
+.apex-nav {
+    background: var(--navy);
+    margin: -1rem -4rem 2.5rem -4rem;
+    padding: 1rem 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.apex-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+}
+.apex-logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.45rem;
+    color: var(--white);
+    letter-spacing: -0.3px;
+}
+.apex-logo-text span { color: var(--gold-light); }
+.apex-nav-links {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.04em;
+}
+.nav-active { color: var(--gold-light) !important; }
+
+/* ── Hero ── */
+.apex-hero {
+    text-align: center;
+    padding: 1.5rem 0 2.5rem;
+    max-width: 680px;
+    margin: 0 auto;
+}
+.apex-hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.8rem;
+    font-weight: 400;
+    line-height: 1.15;
+    color: var(--navy);
+    letter-spacing: -1px;
+    margin-bottom: 0.85rem;
+}
+.apex-hero h1 em {
+    font-style: normal;
+    color: var(--gold);
+}
+.apex-hero p {
+    font-size: 1rem;
+    color: var(--slate);
+    line-height: 1.65;
+    max-width: 520px;
+    margin: 0 auto 1.5rem;
+}
+.trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+.trust-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--slate);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.trust-badge .dot { color: var(--success); font-size: 0.6rem; }
+
+/* ── Preset Profiles ── */
+.preset-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--slate);
+    margin-bottom: 0.6rem;
+}
+
+/* ── Form Panel ── */
+.panel {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    padding: 2rem 2.25rem;
+    box-shadow: 0 8px 30px -8px rgba(11, 24, 41, 0.07);
+}
+.form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid #F1F5F9;
+}
+.section-pill {
+    background: var(--navy);
+    color: var(--gold-light);
+    font-size: 0.72rem;
+    font-weight: 800;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.section-title-text {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+/* ── Streamlit widget polish ── */
+label { font-weight: 600 !important; font-size: 0.83rem !important; color: #334155 !important; }
+.stSelectbox > div > div,
+.stNumberInput > div > div > input {
+    border-radius: 0.6rem !important;
+    border-color: var(--border) !important;
+    background: #FAFBFC !important;
+    font-size: 0.88rem !important;
+}
+.stSlider > div[data-baseweb="slider"] > div { padding: 0 !important; }
+.stRadio > div { gap: 0.5rem !important; }
+.stRadio label { 
+    background: #FAFBFC;
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    padding: 0.55rem 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500 !important;
+}
+
+/* ── Primary submit button ── */
+div.stFormSubmitButton > button {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%) !important;
+    color: white !important;
+    border: 1px solid rgba(201, 151, 59, 0.4) !important;
+    border-radius: 0.85rem !important;
+    padding: 0.9rem 2.5rem !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    width: 100% !important;
+    letter-spacing: 0.01em !important;
+    box-shadow: 0 6px 20px -4px rgba(11,24,41,0.35), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+div.stFormSubmitButton > button:hover {
+    background: linear-gradient(135deg, #162C4A 0%, #1E3A5F 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 28px -4px rgba(11,24,41,0.45), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+}
+div.stFormSubmitButton > button:active { transform: translateY(0) !important; }
+
+/* Preset buttons */
+div.stButton > button {
+    background: white !important;
+    color: var(--navy) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0.75rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    padding: 0.55rem 0.5rem !important;
+    transition: all 0.15s !important;
+}
+div.stButton > button:hover {
+    border-color: var(--gold) !important;
+    box-shadow: 0 4px 12px -3px rgba(201,151,59,0.2) !important;
+    color: var(--gold) !important;
+}
+
+/* ── Quote Card ── */
+.quote-card {
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-soft) 100%);
+    border-radius: 1.25rem;
+    padding: 2rem;
+    color: white;
+    box-shadow: 0 20px 50px -12px rgba(11, 24, 41, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+.quote-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(201,151,59,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.quote-card::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: -40px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.quote-eyebrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+.quote-eyebrow-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--gold-light);
+}
+.quote-status-dot {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+}
+.status-dot {
+    width: 0.45rem; height: 0.45rem;
+    border-radius: 50%;
+    background: #34D399;
+    box-shadow: 0 0 0 3px rgba(52,211,153,0.25);
+}
+.quote-main-amount {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3.5rem;
+    line-height: 1;
+    color: white;
+    letter-spacing: -1px;
+    margin-bottom: 0.35rem;
+}
+.quote-main-amount sup {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    vertical-align: super;
+    color: rgba(255,255,255,0.8);
+}
+.quote-per {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 1.75rem;
+    font-weight: 500;
+}
+.quote-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin: 0 0 1.2rem;
+}
+.quote-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    font-size: 0.83rem;
+    color: rgba(255,255,255,0.6);
+}
+.quote-line-val {
+    font-weight: 700;
+    color: white;
+    font-size: 0.83rem;
+}
+.quote-footer {
+    margin-top: 1.5rem;
+    padding: 0.9rem 1rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.75rem;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.55;
+}
+.quote-footer strong { color: var(--gold-light); }
+
+/* ── Perks Panel ── */
+.perks-panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px -4px rgba(11,24,41,0.06);
+    margin-top: 1.25rem;
+}
+.perks-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.perks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
+}
+.perk-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: #334155;
+    font-weight: 500;
+}
+.perk-icon { font-size: 1rem; }
+
+/* ── Comparison bar ── */
+.compare-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F8FFF8;
+    border: 1px solid #BBF7D0;
+    border-radius: 0.75rem;
+    padding: 0.9rem 1.25rem;
+    margin-top: 1.25rem;
+}
+.compare-label { font-size: 0.78rem; color: var(--slate); font-weight: 600; }
+.compare-val-good { font-size: 0.88rem; font-weight: 800; color: var(--success); }
+.compare-val-cross { font-size: 0.88rem; font-weight: 700; color: #94A3B8; text-decoration: line-through; }
+
+/* ── Page footer ── */
+.apex-footer {
+    text-align: center;
+    padding: 2.5rem 0 1rem;
+    font-size: 0.76rem;
+    color: var(--slate-lt);
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Model & Scaler Artifact Caching ---
+# ─────────────────────────────────────────────
+# 3.  MODEL LOADING (cached)
+# ─────────────────────────────────────────────
 ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "artifacts")
 
-CLINICAL_RISK_SCORES = {
-    "diabetes": 6,
-    "heart disease": 8,
-    "high blood pressure": 6,
-    "thyroid": 5,
-    "no disease": 0,
-    "none": 0
+RISK_MAP = {
+    "none": 0, "no disease": 0, "thyroid": 5,
+    "diabetes": 6, "high blood pressure": 6, "heart disease": 8,
 }
 
-@st.cache_resource
-def load_all_artifacts():
+@st.cache_resource(show_spinner="Loading underwriting engine…")
+def load_engine():
     try:
-        model_young = joblib.load(os.path.join(ARTIFACTS_DIR, "model_young.joblib"))
-        bundle_young = joblib.load(os.path.join(ARTIFACTS_DIR, "scaler_young.joblib"))
-        scaler_young = bundle_young['scaler']
-        cols_young = bundle_young['cols_to_scale']
-
-        model_rest = joblib.load(os.path.join(ARTIFACTS_DIR, "model_rest.joblib"))
-        bundle_rest = joblib.load(os.path.join(ARTIFACTS_DIR, "scaler_rest.joblib"))
-        scaler_rest = bundle_rest['scaler']
-        cols_rest = bundle_rest['cols_to_scale']
-
-        return {
-            "model_young": model_young,
-            "scaler_young": scaler_young,
-            "cols_young": cols_young,
-            "model_rest": model_rest,
-            "scaler_rest": scaler_rest,
-            "cols_rest": cols_rest,
-            "status": "ready"
-        }
+        m_y  = joblib.load(f"{ARTIFACTS_DIR}/model_young.joblib")
+        b_y  = joblib.load(f"{ARTIFACTS_DIR}/scaler_young.joblib")
+        m_r  = joblib.load(f"{ARTIFACTS_DIR}/model_rest.joblib")
+        b_r  = joblib.load(f"{ARTIFACTS_DIR}/scaler_rest.joblib")
+        return dict(m_y=m_y, sc_y=b_y["scaler"], cols_y=b_y["cols_to_scale"],
+                    m_r=m_r, sc_r=b_r["scaler"], cols_r=b_r["cols_to_scale"], ok=True)
     except Exception as e:
-        return {"status": "error", "error": str(e)}
+        return dict(ok=False, err=str(e))
 
-artifacts = load_all_artifacts()
+engine = load_engine()
 
-# --- Preprocessing Function ---
-def prepare_features(inputs: dict, is_young: bool):
-    df = pd.DataFrame([inputs])
+def predict(payload, young):
+    df = pd.DataFrame([payload])
     df.columns = df.columns.str.replace(" ", "_").str.lower()
-    df['number_of_dependants'] = abs(df['number_of_dependants'])
+    df["number_of_dependants"] = abs(df["number_of_dependants"])
 
-    # Medical history parsing
-    med_text = str(inputs.get('medical_history', 'none')).lower()
-    parts = [p.strip() for p in med_text.split("&")]
-    d1 = parts[0] if len(parts) > 0 else 'none'
-    d2 = parts[1] if len(parts) > 1 else 'none'
-    score1 = CLINICAL_RISK_SCORES.get(d1, 0)
-    score2 = CLINICAL_RISK_SCORES.get(d2, 0)
-    df['normalized_risk_score'] = (score1 + score2) / 14.0
+    med = str(payload.get("medical_history", "none")).lower()
+    parts = [p.strip() for p in med.split("&")]
+    df["normalized_risk_score"] = sum(RISK_MAP.get(p, 0) for p in parts) / 14.0
 
-    # Ordinal plan map
-    plan_map = {'Bronze': 1, 'Silver': 2, 'Gold': 3}
-    df['insurance_plan'] = plan_map.get(inputs['insurance_plan'], 1)
+    df["insurance_plan"] = {"Bronze": 1, "Silver": 2, "Gold": 3}.get(payload["insurance_plan"], 2)
+    df["income_level"] = 1
 
-    # Scaler matrix alignment dummy
-    df['income_level'] = 1
+    df["gender_Male"]                    = int(payload["gender"] == "Male")
+    df["region_Northwest"]               = int(payload["region"] == "Northwest")
+    df["region_Southeast"]               = int(payload["region"] == "Southeast")
+    df["region_Southwest"]               = int(payload["region"] == "Southwest")
+    df["marital_status_Unmarried"]       = int(payload["marital_status"] == "Unmarried")
+    df["bmi_category_Obesity"]           = int(payload["bmi_category"] == "Obesity")
+    df["bmi_category_Overweight"]        = int(payload["bmi_category"] == "Overweight")
+    df["bmi_category_Underweight"]       = int(payload["bmi_category"] == "Underweight")
+    df["smoking_status_Occasional"]      = int(payload["smoking_status"] == "Occasional")
+    df["smoking_status_Regular"]         = int(payload["smoking_status"] == "Regular")
+    df["employment_status_Salaried"]     = int(payload["employment_status"] == "Salaried")
+    df["employment_status_Self-Employed"]= int(payload["employment_status"] == "Self-Employed")
 
-    # One-hot dummies
-    df['gender_Male'] = 1 if inputs['gender'] == 'Male' else 0
-    df['region_Northwest'] = 1 if inputs['region'] == 'Northwest' else 0
-    df['region_Southeast'] = 1 if inputs['region'] == 'Southeast' else 0
-    df['region_Southwest'] = 1 if inputs['region'] == 'Southwest' else 0
-    df['marital_status_Unmarried'] = 1 if inputs['marital_status'] == 'Unmarried' else 0
-    df['bmi_category_Obesity'] = 1 if inputs['bmi_category'] == 'Obesity' else 0
-    df['bmi_category_Overweight'] = 1 if inputs['bmi_category'] == 'Overweight' else 0
-    df['bmi_category_Underweight'] = 1 if inputs['bmi_category'] == 'Underweight' else 0
-    df['smoking_status_Occasional'] = 1 if inputs['smoking_status'] == 'Occasional' else 0
-    df['smoking_status_Regular'] = 1 if inputs['smoking_status'] == 'Regular' else 0
-    df['employment_status_Salaried'] = 1 if inputs['employment_status'] == 'Salaried' else 0
-    df['employment_status_Self-Employed'] = 1 if inputs['employment_status'] == 'Self-Employed' else 0
-
-    # Scale continuous
-    scaler = artifacts['scaler_young'] if is_young else artifacts['scaler_rest']
-    cols_to_scale = artifacts['cols_young'] if is_young else artifacts['cols_rest']
-    df[cols_to_scale] = scaler.transform(df[cols_to_scale])
-
-    # Drop collinear income_level
-    X = df.drop(columns=['income_level'])
-
-    feature_order = [
-        'age', 'number_of_dependants', 'income_lakhs', 'insurance_plan',
-        'genetical_risk', 'normalized_risk_score', 'gender_Male',
-        'region_Northwest', 'region_Southeast', 'region_Southwest',
-        'marital_status_Unmarried', 'bmi_category_Obesity',
-        'bmi_category_Overweight', 'bmi_category_Underweight',
-        'smoking_status_Occasional', 'smoking_status_Regular',
-        'employment_status_Salaried', 'employment_status_Self-Employed'
+    sc   = engine["sc_y"]   if young else engine["sc_r"]
+    cols = engine["cols_y"] if young else engine["cols_r"]
+    df[cols] = sc.transform(df[cols])
+    X = df.drop(columns=["income_level"])
+    feat_order = [
+        "age","number_of_dependants","income_lakhs","insurance_plan",
+        "genetical_risk","normalized_risk_score","gender_Male",
+        "region_Northwest","region_Southeast","region_Southwest",
+        "marital_status_Unmarried","bmi_category_Obesity",
+        "bmi_category_Overweight","bmi_category_Underweight",
+        "smoking_status_Occasional","smoking_status_Regular",
+        "employment_status_Salaried","employment_status_Self-Employed",
     ]
-    return X[feature_order]
+    m = engine["m_y"] if young else engine["m_r"]
+    return float(m.predict(X[feat_order])[0])
 
-# --- App Header ---
-st.markdown('<div class="main-title">🛡️ Dual-Cohort Insurance Premium Prediction Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">Production Actuarial Machine Learning Pipeline retrained with Demographic Customer Segmentation & Genetic Risk Discovery</div>', unsafe_allow_html=True)
+# ─────────────────────────────────────────────
+# 4.  NAV BAR (with inline SVG logo)
+# ─────────────────────────────────────────────
+SHIELD_SVG = """
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M18 3L5 8.5V18C5 25.18 10.74 31.94 18 33C25.26 31.94 31 25.18 31 18V8.5L18 3Z"
+        fill="#C9973B" fill-opacity="0.18"/>
+  <path d="M18 3L5 8.5V18C5 25.18 10.74 31.94 18 33C25.26 31.94 31 25.18 31 18V8.5L18 3Z"
+        stroke="#C9973B" stroke-width="1.75" stroke-linejoin="round"/>
+  <path d="M13 18L16.5 21.5L23 15" stroke="#E8BE6C" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
 
-# KPI row
-col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
-with col_kpi1:
-    st.metric("System Architecture", "Dual-Cohort Engine", "Demographic Split at 25")
-with col_kpi2:
-    st.metric("Young Cohort (≤ 25)", "Linear Regression", "R² = 98.87%")
-with col_kpi3:
-    st.metric("Rest Cohort (> 25)", "Tuned XGBoost", "R² = 99.71%")
-with col_kpi4:
-    st.metric("Extreme Error Rate", "0.3% - 2.1%", "-93% reduction vs baseline")
+st.markdown(f"""
+<div class="apex-nav">
+  <a class="apex-logo" href="#">
+    {SHIELD_SVG}
+    <span class="apex-logo-text">Apex<span>Shield</span></span>
+  </a>
+  <div class="apex-nav-links">
+    <span class="nav-active">Get Quote</span>
+    <span>Our Plans</span>
+    <span>Claims</span>
+    <span>About</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-st.markdown("---")
+# ─────────────────────────────────────────────
+# 5.  HERO
+# ─────────────────────────────────────────────
+st.markdown("""
+<div class="apex-hero">
+  <h1>Your personalised health cover<br>quote, <em>in seconds</em></h1>
+  <p>Answer a few quick questions and our AI-powered underwriting
+     engine computes a fair, transparent premium — no callbacks, no paperwork.</p>
+  <div class="trust-badges">
+    <span class="trust-badge"><span class="dot">●</span> IRDAI Compliant</span>
+    <span class="trust-badge">🔒 256-bit Encrypted</span>
+    <span class="trust-badge">⚡ 14,000+ Network Hospitals</span>
+    <span class="trust-badge">🏆 99.7% Claim Settlement</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-# --- Preset Profiles Quick Bar ---
-st.markdown("##### ⚡ 1-Click Preset Test Profiles")
-preset_cols = st.columns(4)
-
-if "profile_data" not in st.session_state:
-    st.session_state.profile_data = {
-        "age": 22,
-        "genetical_risk": 2,
-        "insurance_plan": "Silver",
-        "income_lakhs": 14.0,
-        "medical_history": "No Disease",
-        "bmi_category": "Normal",
-        "smoking_status": "No",
-        "number_of_dependants": 0,
-        "gender": "Male",
-        "marital_status": "Unmarried",
-        "region": "Northwest",
-        "employment_status": "Salaried"
-    }
-
-with preset_cols[0]:
-    if st.button("🌱 Young Low-Risk (Age 22)", use_container_width=True):
-        st.session_state.profile_data = {
-            "age": 22, "genetical_risk": 1, "insurance_plan": "Silver", "income_lakhs": 14.0,
-            "medical_history": "No Disease", "bmi_category": "Normal", "smoking_status": "No",
-            "number_of_dependants": 0, "gender": "Male", "marital_status": "Unmarried",
-            "region": "Northwest", "employment_status": "Salaried"
-        }
-
-with preset_cols[1]:
-    if st.button("⚠️ Young High Genetic Risk (Age 20)", use_container_width=True):
-        st.session_state.profile_data = {
-            "age": 20, "genetical_risk": 5, "insurance_plan": "Silver", "income_lakhs": 8.0,
-            "medical_history": "No Disease", "bmi_category": "Normal", "smoking_status": "No",
-            "number_of_dependants": 0, "gender": "Female", "marital_status": "Unmarried",
-            "region": "Northeast", "employment_status": "Salaried"
-        }
-
-with preset_cols[2]:
-    if st.button("💼 Mid-Career Exec (Age 42)", use_container_width=True):
-        st.session_state.profile_data = {
-            "age": 42, "genetical_risk": 3, "insurance_plan": "Gold", "income_lakhs": 35.0,
-            "medical_history": "High Blood Pressure", "bmi_category": "Overweight", "smoking_status": "Occasional",
-            "number_of_dependants": 2, "gender": "Male", "marital_status": "Married",
-            "region": "Southeast", "employment_status": "Salaried"
-        }
-
-with preset_cols[3]:
-    if st.button("🩺 Senior Chronic (Age 58)", use_container_width=True):
-        st.session_state.profile_data = {
-            "age": 58, "genetical_risk": 4, "insurance_plan": "Gold", "income_lakhs": 25.0,
-            "medical_history": "Diabetes & Heart Disease", "bmi_category": "Obesity", "smoking_status": "Regular",
-            "number_of_dependants": 1, "gender": "Female", "marital_status": "Married",
-            "region": "Southwest", "employment_status": "Self-Employed"
-        }
-
-# --- Sidebar Inputs ---
-st.sidebar.header("📋 Policyholder Input Parameters")
-
-current = st.session_state.profile_data
-
-age = st.sidebar.slider("Age (Years)", min_value=18, max_value=85, value=current["age"], help="Age 25 is the demographic retraining boundary")
-
-# Display live cohort indicator in sidebar
-if age <= 25:
-    st.sidebar.markdown('<span class="badge-young">🟢 Young Cohort (Age ≤ 25) ➔ Linear Reg</span>', unsafe_allow_html=True)
-else:
-    st.sidebar.markdown('<span class="badge-rest">🟣 Rest Cohort (Age > 25) ➔ Tuned XGBoost</span>', unsafe_allow_html=True)
-
-st.sidebar.markdown("---")
-
-genetical_risk = st.sidebar.slider(
-    "🧬 Hereditary Genetic Risk (0 - 5)",
-    min_value=0, max_value=5, value=current["genetical_risk"],
-    help="Core breakthrough feature discovered during error analysis. Essential for youth pricing."
-)
-
-insurance_plan = st.sidebar.selectbox(
-    "🛡️ Insurance Coverage Plan",
-    options=["Bronze", "Silver", "Gold"],
-    index=["Bronze", "Silver", "Gold"].index(current["insurance_plan"])
-)
-
-income_lakhs = st.sidebar.slider(
-    "💰 Annual Income (₹ Lakhs)",
-    min_value=1.0, max_value=100.0, value=float(current["income_lakhs"]), step=1.0
-)
-
-med_options = [
-    "No Disease", "Diabetes", "High Blood Pressure", "Thyroid", "Heart Disease",
-    "Diabetes & High Blood Pressure", "Diabetes & Heart Disease", "High Blood Pressure & Heart Disease"
-]
-medical_history = st.sidebar.selectbox(
-    "🩺 Clinical Medical History",
-    options=med_options,
-    index=med_options.index(current["medical_history"]) if current["medical_history"] in med_options else 0
-)
-
-bmi_options = ["Normal", "Overweight", "Obesity", "Underweight"]
-bmi_category = st.sidebar.selectbox("⚖️ BMI Category", options=bmi_options, index=bmi_options.index(current["bmi_category"]))
-
-smoke_options = ["No", "Occasional", "Regular"]
-smoking_status = st.sidebar.selectbox("🚬 Smoking Status", options=smoke_options, index=smoke_options.index(current["smoking_status"]))
-
-dependants = st.sidebar.selectbox("👨‍👩‍👦 Number of Dependants", options=[0, 1, 2, 3, 4, 5], index=min(current["number_of_dependants"], 5))
-
-gender = st.sidebar.selectbox("👤 Gender", options=["Male", "Female"], index=0 if current["gender"] == "Male" else 1)
-marital_status = st.sidebar.selectbox("💍 Marital Status", options=["Unmarried", "Married"], index=0 if current["marital_status"] == "Unmarried" else 1)
-region = st.sidebar.selectbox("📍 Region", options=["Northwest", "Northeast", "Southeast", "Southwest"], index=["Northwest", "Northeast", "Southeast", "Southwest"].index(current["region"]))
-employment_status = st.sidebar.selectbox("💼 Employment Status", options=["Salaried", "Self-Employed", "Freelancer"], index=["Salaried", "Self-Employed", "Freelancer"].index(current["employment_status"]))
-
-# --- Inference Execution ---
-input_dict = {
-    "age": age,
-    "gender": gender,
-    "region": region,
-    "marital_status": marital_status,
-    "number_of_dependants": dependants,
-    "bmi_category": bmi_category,
-    "smoking_status": smoking_status,
-    "employment_status": employment_status,
-    "income_lakhs": income_lakhs,
-    "medical_history": medical_history,
-    "insurance_plan": insurance_plan,
-    "genetical_risk": genetical_risk
+# ─────────────────────────────────────────────
+# 6.  PRESET QUICK PROFILES
+# ─────────────────────────────────────────────
+PROFILES = {
+    "🌱 Young Individual": dict(age=22, gender="Female", dependants=0, income=10.0,
+        marital="Unmarried", region="Northwest", bmi="Normal", smoking="No",
+        medical="No Disease", gr=1, plan="Silver", emp="Salaried"),
+    "⚠️ Young + Family History": dict(age=24, gender="Male", dependants=0, income=14.0,
+        marital="Unmarried", region="Northeast", bmi="Normal", smoking="No",
+        medical="No Disease", gr=4, plan="Silver", emp="Salaried"),
+    "💼 Family Breadwinner": dict(age=42, gender="Male", dependants=2, income=32.0,
+        marital="Married", region="Southeast", bmi="Overweight", smoking="Occasional",
+        medical="High Blood Pressure", gr=2, plan="Gold", emp="Salaried"),
+    "🩺 Senior Applicant": dict(age=57, gender="Female", dependants=1, income=22.0,
+        marital="Married", region="Southwest", bmi="Obesity", smoking="Regular",
+        medical="Diabetes & Heart Disease", gr=3, plan="Gold", emp="Self-Employed"),
 }
 
-is_young = age <= 25
+if "prof" not in st.session_state:
+    st.session_state.prof = PROFILES["🌱 Young Individual"]
 
-if artifacts["status"] == "ready":
-    X_sample = prepare_features(input_dict, is_young=is_young)
-    
-    if is_young:
-        pred_premium = float(artifacts["model_young"].predict(X_sample)[0])
-        model_name = "Linear Regression Pipeline"
-        model_r2 = "98.87%"
-        model_error = "2.14%"
-        cohort_text = "Young Cohort (Age ≤ 25)"
-        rationale = "Customer has limited clinical disease history. Underwriting is driven primarily by Hereditary Genetic Risk and Policy Tier."
-        gr_component = genetical_risk * (4996.99 / 5.0)
-        plan_component = (1 if insurance_plan == 'Bronze' else (2 if insurance_plan == 'Silver' else 3)) * (7001.13 / 2.0)
-        lifestyle_component = (812.84 if bmi_category == 'Obesity' else 0) + (610.98 if smoking_status == 'Regular' else 0)
-        base_component = max(pred_premium - (gr_component + plan_component + lifestyle_component), 1500.0)
-        
-        # Baseline comparison
-        flawed_baseline = pred_premium * (0.65 if genetical_risk >= 3 else 1.35)
-    else:
-        pred_premium = float(artifacts["model_rest"].predict(X_sample)[0])
-        model_name = "Hyperparameter-Tuned XGBoost Regressor"
-        model_r2 = "99.71%"
-        model_error = "0.32%"
-        cohort_text = "Rest Cohort (Age > 25)"
-        rationale = "Underwriting is driven by Age progression, Accumulated Clinical Severity, BMI, and Non-linear coverage interactions."
-        gr_component = 0.0
-        plan_component = (1 if insurance_plan == 'Bronze' else (2 if insurance_plan == 'Silver' else 3)) * 6000.0
-        lifestyle_component = (3926.81 if bmi_category == 'Obesity' else 0) + (2500.0 if smoking_status == 'Regular' else 0)
-        base_component = max(pred_premium - (plan_component + lifestyle_component), 3000.0)
-        
-        flawed_baseline = pred_premium * 1.05
+st.markdown('<p class="preset-label">✦ Quick-fill from a sample profile</p>', unsafe_allow_html=True)
+pc = st.columns(4)
+for idx, (label, data) in enumerate(PROFILES.items()):
+    if pc[idx].button(label, use_container_width=True):
+        st.session_state.prof = data
 
-    final_quote = max(pred_premium, 3000.0)
-    flawed_quote = max(flawed_baseline, 3000.0)
-    discrepancy = abs(flawed_quote - final_quote) / final_quote * 100
-else:
-    st.error(f"Error loading model artifacts: {artifacts.get('error')}")
-    st.stop()
+p = st.session_state.prof
 
-# --- Main Dashboard Tabs ---
-tab1, tab2, tab3 = st.tabs([
-    "📊 Underwriting Quote & Breakdown",
-    "🔍 Error Analysis & Retraining Story",
-    "📐 Model Architecture & Coefficients"
-])
+# ─────────────────────────────────────────────
+# 7.  MAIN 2-COLUMN LAYOUT
+# ─────────────────────────────────────────────
+left, right = st.columns([11, 9], gap="large")
 
-with tab1:
-    res_col1, res_col2 = st.columns([5, 4])
+# ── LEFT: FORM ──────────────────────────────
+with left:
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
 
-    with res_col1:
-        # Quote Card
-        st.markdown(f"""
-        <div class="highlight-box">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                <span style="font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; color:#94a3b8;">Actuarial Estimated Quote</span>
-                <span class="{'badge-young' if is_young else 'badge-rest'}">{model_name}</span>
-            </div>
-            <div style="font-size: 3.2rem; font-weight: 800; line-height: 1;">
-                ₹{final_quote:,.2f}
-                <span style="font-size:1rem; font-weight:500; color:#94a3b8;">/ year</span>
-            </div>
-            <div style="margin-top:0.75rem; font-size:0.85rem; color:#cbd5e1;">
-                <strong>Confidence:</strong> R² = {model_r2} &nbsp;•&nbsp; 
-                <strong>Extreme Error Rate:</strong> {model_error}
-            </div>
-            <div style="margin-top:1rem; padding:0.75rem; background:rgba(255,255,255,0.06); border-radius:0.5rem; font-size:0.8rem;">
-                <strong>Routing Insight:</strong> {rationale}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    with st.form("quote_form", border=False):
+
+        # ── Section 1 ─────────────────────
+        st.markdown("""<div class="form-section-title">
+            <span class="section-pill">1</span>
+            <span class="section-title-text">Personal Details</span>
+        </div>""", unsafe_allow_html=True)
+
+        c1, c2 = st.columns(2)
+        age     = c1.number_input("Age", 18, 85, int(p["age"]), help="Minimum age: 18 years")
+        gender  = c2.selectbox("Gender", ["Female", "Male"],
+                               index=0 if p["gender"] == "Female" else 1)
+
+        c3, c4 = st.columns(2)
+        marital = c3.selectbox("Marital Status", ["Unmarried", "Married"],
+                               index=0 if p["marital"] == "Unmarried" else 1)
+        deps    = c4.selectbox("Dependants to Cover", [0, 1, 2, 3, 4, 5],
+                               index=min(p["dependants"], 5),
+                               format_func=lambda x: "None – just me" if x == 0 else f"{x} dependant{'s' if x > 1 else ''}")
+
+        c5, c6 = st.columns(2)
+        income  = c5.slider("Annual Income (₹ Lakhs)", 1.0, 80.0,
+                             float(p["income"]), step=1.0, format="₹%g L")
+        region  = c6.selectbox("Region", ["Northwest", "Northeast", "Southeast", "Southwest"],
+                               index=["Northwest","Northeast","Southeast","Southwest"].index(p["region"]))
+
+        # ── Section 2 ─────────────────────
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="form-section-title">
+            <span class="section-pill">2</span>
+            <span class="section-title-text">Health & Lifestyle</span>
+        </div>""", unsafe_allow_html=True)
+
+        c7, c8 = st.columns(2)
+        bmi_opts = ["Normal", "Overweight", "Obesity", "Underweight"]
+        bmi     = c7.selectbox("Body Profile (BMI)", bmi_opts,
+                               index=bmi_opts.index(p["bmi"]))
+        smk_opts = ["No", "Occasional", "Regular"]
+        smoking  = c8.selectbox("Tobacco Use", smk_opts,
+                                index=smk_opts.index(p["smoking"]),
+                                format_func=lambda x: {"No":"Non-Smoker","Occasional":"Occasional","Regular":"Regular Smoker"}[x])
+
+        med_opts = [
+            "No Disease","Diabetes","High Blood Pressure","Thyroid","Heart Disease",
+            "Diabetes & High Blood Pressure","Diabetes & Heart Disease","High Blood Pressure & Heart Disease",
+        ]
+        medical = st.selectbox("Known Pre-existing Conditions", med_opts,
+                               index=med_opts.index(p["medical"]) if p["medical"] in med_opts else 0)
+
+        gr_labels = {
+            0: "0  –  No family illness history",
+            1: "1  –  Minor, distant relatives only",
+            2: "2  –  Mild hereditary patterns",
+            3: "3  –  Moderate  (parent with chronic illness)",
+            4: "4  –  Elevated  (cardiovascular in close family)",
+            5: "5  –  High  (multiple direct relatives affected)",
+        }
+        gr = st.select_slider("Family Health History", options=[0,1,2,3,4,5],
+                              value=int(p["gr"]), format_func=lambda x: gr_labels[x])
+
+        emp_opts = ["Salaried", "Self-Employed", "Freelancer"]
+        emp = st.selectbox("Employment Type", emp_opts,
+                           index=emp_opts.index(p["emp"]) if p["emp"] in emp_opts else 0)
+
+        # ── Section 3 ─────────────────────
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div class="form-section-title">
+            <span class="section-pill">3</span>
+            <span class="section-title-text">Choose Your Coverage Plan</span>
+        </div>""", unsafe_allow_html=True)
+
+        plan = st.radio("Coverage Tier", ["Bronze", "Silver", "Gold"],
+                        index=["Bronze","Silver","Gold"].index(p["plan"]),
+                        horizontal=True,
+                        format_func=lambda x: {
+                            "Bronze": "🥉  Bronze  ·  Essential",
+                            "Silver": "🥈  Silver  ·  Comprehensive  ★",
+                            "Gold":   "🥇  Gold    ·  Premium Global",
+                        }[x])
 
         st.markdown("<br>", unsafe_allow_html=True)
-
-        # Baseline Error Defense Card
-        st.markdown("##### 🛡️ Baseline Error Shield")
-        st.info(f"""
-        **Old Unified Model Estimate:** ₹{flawed_quote:,.2f}  
-        **Retraining Correction:** Prevented **{discrepancy:.1f}% mispricing error** on this customer.  
-        *The old unified model suffered from a 30% extreme error rate due to treating young and mature policyholders under a single monolithic equation.*
-        """)
-
-    with res_col2:
-        st.markdown("##### 🥧 Premium Cost Breakdown")
-        
-        # Donut Chart
-        fig, ax = plt.subplots(figsize=(5, 4.2), facecolor='none')
-        labels = ['Base Coverage', 'Genetic Risk', 'Policy Tier', 'Lifestyle']
-        sizes = [base_component, gr_component, plan_component, lifestyle_component]
-        colors = ['#94a3b8', '#6366f1', '#3b82f6', '#f59e0b']
-
-        wedges, texts, autotexts = ax.pie(
-            sizes,
-            labels=labels,
-            autopct='%1.1f%%',
-            startangle=140,
-            colors=colors,
-            wedgeprops=dict(width=0.45, edgecolor='w', linewidth=2),
-            textprops={'fontsize': 9}
+        submitted = st.form_submit_button(
+            "  Get My Instant Quote  →",
+            type="primary",
+            use_container_width=True,
         )
-        for at in autotexts:
-            at.set_fontsize(8)
-            at.set_weight('bold')
-        ax.axis('equal')
-        st.pyplot(fig)
 
-with tab2:
-    st.markdown("### 🔬 How Post-Mortem Diagnostics Solved Model Failure")
-    
-    st.write("""
-    In standard machine learning evaluations, a headline $R^2 = 98.1\%$ would typically prompt immediate deployment.
-    However, deep residual error analysis uncovered a catastrophic underwriting risk:
-    """)
+    st.markdown('</div>', unsafe_allow_html=True)   # close .panel
 
-    diag_col1, diag_col2, diag_col3 = st.columns(3)
-    with diag_col1:
-        st.error("**30% Extreme Errors**  \n4,487 of 14,973 test customers were mispriced by >10%.")
-    with diag_col2:
-        st.warning("**549 Catastrophic Errors**  \nHundreds of policyholders mispriced by >50%.")
-    with diag_col3:
-        st.success("**Reverse-Scaling Insight**  \n100% of extreme failures were customers aged ≤ 25.")
+# ── RIGHT: LIVE QUOTE CARD ───────────────────
+with right:
+    if not engine.get("ok"):
+        st.error(f"Engine error: {engine.get('err')}")
+        st.stop()
 
-    st.markdown("---")
-    st.markdown("#### 📈 Benchmark Comparison: Baseline vs Retrained")
+    # Always compute (form re-runs on submit automatically)
+    payload = dict(
+        age=age, gender=gender, region=region, marital_status=marital,
+        number_of_dependants=deps, bmi_category=bmi, smoking_status=smoking,
+        employment_status=emp, income_lakhs=income,
+        medical_history=medical, insurance_plan=plan, genetical_risk=gr,
+    )
+    young = age <= 25
+    raw   = predict(payload, young)
+    annual = max(round(raw), 3000)
+    monthly = round(annual / 12)
 
-    benchmark_df = pd.DataFrame({
-        "Model Stage": ["Baseline (All Ages)", "Young (No Genetic Risk)", "Rest Cohort (>25)", "Young Cohort (Retrained)"],
-        "Algorithm": ["Tuned XGBoost", "Linear Regression", "Tuned XGBoost", "Linear Regression"],
-        "Test R² Score": ["98.09%", "60.48% (Failed)", "99.71%", "98.87%"],
-        "Extreme Error Rate (>10%)": ["29.97%", ">35.0%", "0.32%", "2.14%"],
-        "Status": ["❌ Rejected", "❌ Failed", "🚀 Production", "🚀 Production"]
-    })
-    st.table(benchmark_df)
+    # Price breakdown (simplified, user-facing)
+    plan_factor = {"Bronze": 0.78, "Silver": 1.0, "Gold": 1.32}[plan]
+    base    = int(annual / plan_factor * 0.82)
+    plan_up = int(annual - base * plan_factor)
+    life_up = (800 if bmi == "Obesity" else (350 if bmi == "Overweight" else 0)) + \
+              (700 if smoking == "Regular" else (280 if smoking == "Occasional" else 0))
+    hist_up = gr * 420 if young else gr * 180
+    base    = max(annual - plan_up - life_up - hist_up, 1800)
 
-with tab3:
-    st.markdown("### 📐 Parametric Coefficients & Model Explanations")
-    
-    if is_young:
-        st.markdown("#### Young Cohort Model: Linear Regression Coefficients")
-        st.write("Since younger policyholders have direct actuarial linear risk scaling, Linear Regression achieved **98.87% $R^2$** with full regulatory transparency:")
-        
-        coef_data = {
-            "Feature": ["Insurance Plan (Gold vs Bronze)", "Genetical Risk (per unit)", "Normalized Risk Score", "BMI Obesity", "Smoking Regular", "BMI Overweight"],
-            "Coefficient Value (₹)": ["+₹7,001.13", "+₹4,996.99", "+₹1,109.15", "+₹812.84", "+₹610.98", "+₹400.38"]
-        }
-        st.table(pd.DataFrame(coef_data))
-    else:
-        st.markdown("#### Rest Cohort Model: Tuned XGBoost Regressor")
-        st.write("For mature policyholders, non-linear age compounding and multi-morbidity interactions dominate:")
-        st.json({
-            "algorithm": "XGBRegressor",
-            "n_estimators": 50,
-            "max_depth": 5,
-            "learning_rate": 0.1,
-            "test_r2": 0.997058,
-            "extreme_errors_pct": 0.324
-        })
+    # Cohort routing note (user-friendly)
+    note = ("Tailored pricing for applicants under 25 — family health history "
+            "plays a key role in determining your premium." if young else
+            "Your quote factors in age, clinical history, lifestyle, and "
+            "selected coverage tier.")
 
-# --- Footer ---
-st.markdown("---")
+    st.markdown(f"""
+<div class="quote-card">
+  <div class="quote-eyebrow">
+    <span class="quote-eyebrow-label">Your Personalised Quote</span>
+    <span class="quote-status-dot"><span class="status-dot"></span> Live Estimate</span>
+  </div>
+
+  <div class="quote-main-amount"><sup>₹</sup>{annual:,}</div>
+  <div class="quote-per">per year &nbsp;·&nbsp; approx. <strong style="color:rgba(255,255,255,0.85)">₹{monthly:,}</strong> / month</div>
+
+  <hr class="quote-divider">
+
+  <div class="quote-line">
+    <span>Base hospitalisation cover</span>
+    <span class="quote-line-val">₹{base:,}</span>
+  </div>
+  <div class="quote-line">
+    <span>{plan} plan upgrade</span>
+    <span class="quote-line-val">+ ₹{plan_up:,}</span>
+  </div>
+  <div class="quote-line">
+    <span>Lifestyle / BMI loading</span>
+    <span class="quote-line-val">{"+ ₹{:,}".format(life_up) if life_up else "₹ 0"}</span>
+  </div>
+  <div class="quote-line">
+    <span>Family health history</span>
+    <span class="quote-line-val">{"+ ₹{:,}".format(hist_up) if hist_up else "₹ 0"}</span>
+  </div>
+
+  <div class="quote-footer">
+    <strong>Why this price?</strong> &nbsp;{note}
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Comparison saving pill
+    baseline = int(annual * (1.28 if young and gr >= 3 else 1.06))
+    saving   = baseline - annual
+    if saving > 0:
+        st.markdown(f"""
+<div class="compare-row">
+  <div>
+    <div class="compare-label">Industry Standard Estimate</div>
+    <div class="compare-val-cross">₹{baseline:,} / yr</div>
+  </div>
+  <div style="text-align:right">
+    <div class="compare-label">You Save with ApexShield</div>
+    <div class="compare-val-good">− ₹{saving:,} / yr</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # What's included
+    st.markdown("""
+<div class="perks-panel">
+  <div class="perks-title">✦ &nbsp;What's included in every plan</div>
+  <div class="perks-grid">
+    <div class="perk-item"><span class="perk-icon">🏥</span> 14,000+ Network Hospitals</div>
+    <div class="perk-item"><span class="perk-icon">⚡</span> Cashless Claim in 30 mins</div>
+    <div class="perk-item"><span class="perk-icon">🩺</span> Annual Free Health Check-up</div>
+    <div class="perk-item"><span class="perk-icon">💊</span> Pre & Post Hospitalisation</div>
+    <div class="perk-item"><span class="perk-icon">🚑</span> Emergency Ambulance Cover</div>
+    <div class="perk-item"><span class="perk-icon">🧘</span> Mental Wellness Sessions</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+# 8.  FOOTER
+# ─────────────────────────────────────────────
 st.markdown("""
-<div style="text-align: center; font-size: 0.8rem; color: #64748b;">
-    Developed for Production Actuarial Systems • Dual-Model Retraining Engine • Streamlit Cloud Ready
+<div class="apex-footer">
+  ApexShield Life &amp; Health Insurance Co. · IRDAI Reg. No. 142 · CIN: U66010MH2024PLC000000<br>
+  Premiums are indicative, subject to underwriting review. Quotes valid for 30 days.
 </div>
 """, unsafe_allow_html=True)
