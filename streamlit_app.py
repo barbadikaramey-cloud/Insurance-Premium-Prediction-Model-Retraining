@@ -1,407 +1,396 @@
 """
-ApexShield | Premium Health Insurance Quotation Engine
-Final production build — elegant, minimal, professional.
+ApexShield | Dual-Cohort Health Insurance Underwriting Engine
+Clean, compact, session-state-driven form — no scroll needed, instant feedback.
 """
 import os
+import textwrap
 import joblib
 import pandas as pd
 import streamlit as st
 
-# ─────────────────────────────────────────────
-# 1.  PAGE CONFIG
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# PAGE CONFIG
+# ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="ApexShield · Instant Health Insurance Quote",
+    page_title="ApexShield · Insurance Underwriting",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# ─────────────────────────────────────────────
-# 2.  GLOBAL CSS  (rich but restrained palette)
-#     Deep navy + warm gold + soft champagne
-# ─────────────────────────────────────────────
-st.markdown("""
+def html(content: str):
+    """Render HTML safely without indentation causing markdown code blocks."""
+    st.markdown(textwrap.dedent(content).strip(), unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CSS
+# ─────────────────────────────────────────────────────────────────────────────
+html("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ── Reset & Root ── */
 :root {
-    --navy:       #0B1829;
-    --navy-mid:   #122039;
-    --navy-soft:  #1A2E4A;
-    --gold:       #C9973B;
-    --gold-light: #E8BE6C;
-    --champagne:  #F9F4EC;
-    --slate:      #64748B;
-    --slate-lt:   #94A3B8;
-    --border:     #E2E8F0;
-    --white:      #FFFFFF;
-    --success:    #059669;
+    --bg:     #F1F5F9;
+    --white:  #FFFFFF;
+    --navy:   #0F172A;
+    --nmid:   #1E293B;
+    --nsoft:  #334155;
+    --blue:   #2563EB;
+    --bdk:    #1D4ED8;
+    --blt:    #EFF6FF;
+    --brim:   #BFDBFE;
+    --green:  #059669;
+    --glt:    #ECFDF5;
+    --grim:   #A7F3D0;
+    --border: #E2E8F0;
+    --muted:  #64748B;
 }
 
+*, *::before, *::after { box-sizing: border-box; }
 html, body, [class*="css"] {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     color: var(--navy);
 }
-.stApp { background: var(--champagne); }
-
-/* ── Hide Streamlit chrome ── */
-#MainMenu, footer, header { visibility: hidden; }
-.block-container { padding-top: 0 !important; }
-
-/* ── Navbar ── */
-.apex-nav {
-    background: var(--navy);
-    margin: -1rem -4rem 2.5rem -4rem;
-    padding: 1rem 4rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.apex-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    text-decoration: none;
-}
-.apex-logo-text {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.45rem;
-    color: var(--white);
-    letter-spacing: -0.3px;
-}
-.apex-logo-text span { color: var(--gold-light); }
-.apex-nav-links {
-    display: flex;
-    gap: 2rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: rgba(255,255,255,0.55);
-    letter-spacing: 0.04em;
-}
-.nav-active { color: var(--gold-light) !important; }
-
-/* ── Hero ── */
-.apex-hero {
-    text-align: center;
-    padding: 1.5rem 0 2.5rem;
-    max-width: 680px;
-    margin: 0 auto;
-}
-.apex-hero h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 2.8rem;
-    font-weight: 400;
-    line-height: 1.15;
-    color: var(--navy);
-    letter-spacing: -1px;
-    margin-bottom: 0.85rem;
-}
-.apex-hero h1 em {
-    font-style: normal;
-    color: var(--gold);
-}
-.apex-hero p {
-    font-size: 1rem;
-    color: var(--slate);
-    line-height: 1.65;
-    max-width: 520px;
-    margin: 0 auto 1.5rem;
-}
-.trust-badges {
-    display: flex;
-    justify-content: center;
-    gap: 0.65rem;
-    flex-wrap: wrap;
-}
-.trust-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 9999px;
-    padding: 0.3rem 0.85rem;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--slate);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-.trust-badge .dot { color: var(--success); font-size: 0.6rem; }
-
-/* ── Preset Profiles ── */
-.preset-label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--slate);
-    margin-bottom: 0.6rem;
+.stApp { background: var(--bg) !important; }
+header[data-testid="stHeader"] { display: none !important; }
+#MainMenu, footer { visibility: hidden !important; }
+.block-container {
+    max-width: 1320px !important;
+    padding: 0.45rem 1.15rem 0.85rem !important;
 }
 
-/* ── Form Panel ── */
-.panel {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 1.25rem;
-    padding: 2rem 2.25rem;
-    box-shadow: 0 8px 30px -8px rgba(11, 24, 41, 0.07);
-}
-.form-section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    margin-bottom: 1.2rem;
-    padding-bottom: 0.65rem;
-    border-bottom: 1px solid #F1F5F9;
-}
-.section-pill {
-    background: var(--navy);
-    color: var(--gold-light);
-    font-size: 0.72rem;
-    font-weight: 800;
-    width: 1.55rem;
-    height: 1.55rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.section-title-text {
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: var(--navy);
-}
-
-/* ── Streamlit widget polish ── */
-label { font-weight: 600 !important; font-size: 0.83rem !important; color: #334155 !important; }
-.stSelectbox > div > div,
-.stNumberInput > div > div > input {
-    border-radius: 0.6rem !important;
-    border-color: var(--border) !important;
-    background: #FAFBFC !important;
-    font-size: 0.88rem !important;
-}
-.stSlider > div[data-baseweb="slider"] > div { padding: 0 !important; }
-.stRadio > div { gap: 0.5rem !important; }
-.stRadio label { 
-    background: #FAFBFC;
-    border: 1px solid var(--border);
+/* ── Header ── */
+.hdr {
+    background: linear-gradient(130deg, #0F172A 0%, #1E293B 55%, #1E3A8A 100%);
     border-radius: 0.6rem;
-    padding: 0.55rem 1rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-weight: 500 !important;
+    padding: 0.45rem 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 0.4rem;
+    box-shadow: 0 4px 12px -2px rgba(15,23,42,0.16);
+    border: 1px solid rgba(255,255,255,0.07);
+    margin-bottom: 0.4rem;
+}
+.hdr-brand { display: flex; align-items: center; gap: 0.55rem; }
+.hdr-icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 0.4rem; display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+}
+.hdr-title { font-size: 0.98rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+.hdr-title b { color: #93C5FD; }
+.hdr-sub { font-size: 0.64rem; color: #94A3B8; margin-top: 1px; }
+.hdr-badges { display: flex; gap: 0.3rem; flex-wrap: wrap; align-items: center; }
+.hbadge {
+    font-size: 0.63rem; font-weight: 600;
+    padding: 0.16rem 0.48rem; border-radius: 9999px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.11);
+    color: #CBD5E1; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 0.25rem;
+}
+.hbadge.live {
+    background: rgba(16,185,129,0.14); border-color: rgba(52,211,153,0.28); color: #34D399;
+}
+.ldot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #34D399; box-shadow: 0 0 0 2px rgba(52,211,153,0.3);
 }
 
-/* ── Primary submit button ── */
-div.stFormSubmitButton > button {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%) !important;
-    color: white !important;
-    border: 1px solid rgba(201, 151, 59, 0.4) !important;
-    border-radius: 0.85rem !important;
-    padding: 0.9rem 2.5rem !important;
-    font-size: 1rem !important;
+/* ── Preset buttons ── */
+.preset-row {
+    display: flex; align-items: center; gap: 0.4rem;
+    margin-bottom: 0.35rem;
+}
+.preset-lbl {
+    font-size: 0.65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); margin: 0;
+}
+div[data-testid="stButton"] > button {
+    background: var(--white) !important;
+    color: var(--nmid) !important;
+    -webkit-text-fill-color: var(--nmid) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: 0.45rem !important;
+    font-size: 0.74rem !important; font-weight: 600 !important;
+    padding: 0.28rem 0.4rem !important;
+    transition: all 0.15s !important;
+}
+div[data-testid="stButton"] > button:hover {
+    background: var(--blt) !important;
+    border-color: var(--blue) !important;
+    color: var(--bdk) !important;
+    -webkit-text-fill-color: var(--bdk) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ── Form card ── */
+div[data-testid="stForm"] {
+    background: var(--white) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0.7rem !important;
+    padding: 0.65rem 0.95rem 0.75rem !important;
+    box-shadow: 0 2px 8px -2px rgba(15,23,42,0.05) !important;
+}
+div[data-testid="stForm"] [data-testid="stVerticalBlock"] { gap: 0.35rem !important; }
+
+/* ── Section row ── */
+.sec {
+    display: flex; align-items: center; gap: 0.4rem;
+    padding-bottom: 0.2rem; margin-bottom: 0.35rem;
+    border-bottom: 1px solid #F1F5F9;
+    margin-top: 0;
+}
+.sec-mt { margin-top: 0.45rem; }
+.sec-num {
+    width: 1.25rem; height: 1.25rem; border-radius: 50%;
+    background: #1E3A8A; color: #93C5FD;
+    font-size: 0.62rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.sec-title { font-size: 0.78rem; font-weight: 700; color: var(--navy); }
+.ctag {
+    margin-left: auto; font-size: 0.63rem; font-weight: 700;
+    padding: 0.14rem 0.45rem; border-radius: 9999px;
+}
+.ctag-y { background: var(--glt); color: var(--green); border: 1px solid var(--grim); }
+.ctag-a { background: var(--blt); color: var(--bdk);   border: 1px solid var(--brim); }
+
+/* ── Widget labels ── */
+label[data-testid="stWidgetLabel"] p {
+    font-size: 0.74rem !important; font-weight: 700 !important;
+    color: #1E293B !important; -webkit-text-fill-color: #1E293B !important;
+    margin-bottom: 0.15rem !important;
+}
+
+/* ── Selectboxes & Inputs ── */
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    border-radius: 0.45rem !important;
+    border: 1.5px solid #CBD5E1 !important;
+    background: #F8FAFC !important;
+    min-height: 36px !important;
+}
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within {
+    border-color: var(--blue) !important;
+    background: var(--white) !important;
+}
+
+/* Guaranteed high-contrast visible text for selectbox values */
+div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+div[data-testid="stSelectbox"] [data-testid="stMarkdownContainer"] p,
+div[data-testid="stSelectbox"] span,
+div[data-testid="stSelectbox"] div {
+    color: #0F172A !important;
+    -webkit-text-fill-color: #0F172A !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+}
+div[data-testid="stSelectbox"] svg {
+    fill: #475569 !important;
+}
+
+/* Number Inputs */
+div[data-testid="stNumberInput"] > div > div > input {
+    border-radius: 0.45rem !important;
+    border: 1.5px solid #CBD5E1 !important;
+    background: #F8FAFC !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    min-height: 36px !important;
+    color: #0F172A !important;
+    -webkit-text-fill-color: #0F172A !important;
+}
+div[data-testid="stNumberInput"] > div > div > input:focus {
+    border-color: var(--blue) !important;
+    background: var(--white) !important;
+}
+
+/* Dropdown Menu Popover */
+div[data-baseweb="popover"],
+div[data-baseweb="popover"] > div,
+ul[role="listbox"] {
+    background-color: #FFFFFF !important;
+    border: 1.5px solid #CBD5E1 !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 10px 25px rgba(15,23,42,0.18) !important;
+}
+div[data-baseweb="popover"] li,
+ul[role="listbox"] li {
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    -webkit-text-fill-color: #0F172A !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    padding: 0.45rem 0.75rem !important;
+}
+div[data-baseweb="popover"] li:hover,
+ul[role="listbox"] li:hover,
+div[data-baseweb="popover"] li[aria-selected="true"],
+ul[role="listbox"] li[aria-selected="true"] {
+    background-color: #EFF6FF !important;
+    color: #1D4ED8 !important;
+    -webkit-text-fill-color: #1D4ED8 !important;
     font-weight: 700 !important;
-    width: 100% !important;
-    letter-spacing: 0.01em !important;
-    box-shadow: 0 6px 20px -4px rgba(11,24,41,0.35), inset 0 1px 0 rgba(255,255,255,0.07) !important;
-    transition: all 0.2s ease !important;
+}
+
+/* ── Radio buttons (Coverage Tier) ── */
+div[data-testid="stRadio"] div[role="radiogroup"] {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 0.5rem !important;
+}
+div[data-testid="stRadio"] div[role="radiogroup"] label {
+    background: #F8FAFC !important;
+    border: 1.5px solid #CBD5E1 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.4rem 0.4rem !important;
     cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.15s ease !important;
+    margin: 0 !important;
+}
+div[data-testid="stRadio"] div[role="radiogroup"] label:hover {
+    border-color: #2563EB !important;
+    background: #EFF6FF !important;
+}
+div[data-testid="stRadio"] div[role="radiogroup"] label p {
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    color: #1E293B !important;
+    -webkit-text-fill-color: #1E293B !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* ── Genetic risk badge ── */
+.gr-strip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.25rem 0.6rem; border-radius: 0.4rem;
+    font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem;
+}
+
+/* ── Submit Button ── */
+div.stFormSubmitButton > button {
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%) !important;
+    color: #fff !important; border: none !important;
+    border-radius: 0.55rem !important;
+    padding: 0.52rem 1.2rem !important;
+    font-size: 0.85rem !important; font-weight: 700 !important;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.3) !important;
+    transition: all 0.2s !important; width: 100% !important;
+    letter-spacing: -0.01em !important;
 }
 div.stFormSubmitButton > button:hover {
-    background: linear-gradient(135deg, #162C4A 0%, #1E3A5F 100%) !important;
+    background: linear-gradient(135deg, #172554 0%, #1D4ED8 100%) !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 10px 28px -4px rgba(11,24,41,0.45), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+    box-shadow: 0 6px 18px rgba(37,99,235,0.4) !important;
 }
 div.stFormSubmitButton > button:active { transform: translateY(0) !important; }
 
-/* Preset buttons */
-div.stButton > button {
-    background: white !important;
-    color: var(--navy) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 0.75rem !important;
-    font-size: 0.8rem !important;
-    font-weight: 600 !important;
-    padding: 0.55rem 0.5rem !important;
-    transition: all 0.15s !important;
+/* ── Result strip below submit ── */
+.result-strip {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--glt); border: 1.5px solid var(--grim);
+    border-radius: 0.55rem; padding: 0.6rem 0.95rem;
+    font-size: 0.82rem; font-weight: 700; color: #047857;
+    margin-top: 0.6rem;
+    animation: fadeUp 0.3s ease;
 }
-div.stButton > button:hover {
-    border-color: var(--gold) !important;
-    box-shadow: 0 4px 12px -3px rgba(201,151,59,0.2) !important;
-    color: var(--gold) !important;
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
+.result-amt { font-size: 1.05rem; font-weight: 800; color: var(--navy); }
 
-/* ── Quote Card ── */
-.quote-card {
-    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-soft) 100%);
-    border-radius: 1.25rem;
-    padding: 2rem;
-    color: white;
-    box-shadow: 0 20px 50px -12px rgba(11, 24, 41, 0.4);
-    position: relative;
-    overflow: hidden;
+/* ── Quote card ── */
+.q-card {
+    background: linear-gradient(155deg, #0F172A 0%, #1E293B 55%, #0F172A 100%);
+    border-radius: 0.85rem;
+    padding: 1.15rem 1.25rem;
+    color: #fff;
+    box-shadow: 0 10px 24px -4px rgba(15,23,42,0.3);
+    border: 1px solid rgba(255,255,255,0.08);
+    position: relative; overflow: hidden;
 }
-.quote-card::before {
-    content: '';
-    position: absolute;
-    top: -60px; right: -60px;
-    width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(201,151,59,0.15) 0%, transparent 70%);
-    border-radius: 50%;
+.q-card.fresh {
+    box-shadow: 0 0 0 3px #2563EB, 0 10px 28px -4px rgba(15,23,42,0.35);
+    border-color: #3B82F6;
 }
-.quote-card::after {
-    content: '';
-    position: absolute;
-    bottom: -80px; left: -40px;
-    width: 220px; height: 220px;
-    background: radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 70%);
-    border-radius: 50%;
+.q-card::before {
+    content: ''; position: absolute; top: -35px; right: -35px;
+    width: 130px; height: 130px;
+    background: radial-gradient(circle, rgba(37,99,235,0.2) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
 }
-.quote-eyebrow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
+.q-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 0.75rem;
 }
-.quote-eyebrow-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--gold-light);
+.q-lbl {
+    font-size: 0.64rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em; color: #93C5FD;
 }
-.quote-status-dot {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: rgba(255,255,255,0.5);
+.q-badge {
+    font-size: 0.63rem; font-weight: 600;
+    padding: 0.16rem 0.45rem; border-radius: 9999px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12); color: #E2E8F0;
 }
-.status-dot {
-    width: 0.45rem; height: 0.45rem;
-    border-radius: 50%;
-    background: #34D399;
-    box-shadow: 0 0 0 3px rgba(52,211,153,0.25);
+.q-amount {
+    font-size: 2.5rem; font-weight: 800;
+    letter-spacing: -0.04em; color: #fff; line-height: 1;
+    margin-bottom: 0.2rem;
 }
-.quote-main-amount {
-    font-family: 'DM Serif Display', serif;
-    font-size: 3.5rem;
-    line-height: 1;
-    color: white;
-    letter-spacing: -1px;
-    margin-bottom: 0.35rem;
+.q-amount sup { font-size: 1.05rem; font-weight: 600; color: #93C5FD; margin-right: 2px; }
+.q-mo { font-size: 0.75rem; color: #94A3B8; margin-bottom: 0.85rem; font-weight: 500; }
+.q-mo b { color: #38BDF8; }
+.q-div { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 0 0 0.65rem; }
+.q-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.28rem 0; font-size: 0.74rem; color: #CBD5E1;
 }
-.quote-main-amount sup {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 600;
-    vertical-align: super;
-    color: rgba(255,255,255,0.8);
+.q-row b { font-weight: 700; color: #fff; }
+.q-note {
+    margin-top: 0.75rem; padding: 0.55rem 0.75rem;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.5rem; font-size: 0.7rem; color: #94A3B8; line-height: 1.4;
 }
-.quote-per {
-    font-size: 0.82rem;
-    color: rgba(255,255,255,0.45);
-    margin-bottom: 1.75rem;
-    font-weight: 500;
-}
-.quote-divider {
-    border: none;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin: 0 0 1.2rem;
-}
-.quote-line {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    font-size: 0.83rem;
-    color: rgba(255,255,255,0.6);
-}
-.quote-line-val {
-    font-weight: 700;
-    color: white;
-    font-size: 0.83rem;
-}
-.quote-footer {
-    margin-top: 1.5rem;
-    padding: 0.9rem 1rem;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 0.75rem;
-    font-size: 0.78rem;
-    color: rgba(255,255,255,0.65);
-    line-height: 1.55;
-}
-.quote-footer strong { color: var(--gold-light); }
+.q-note strong { color: #60A5FA; }
 
-/* ── Perks Panel ── */
-.perks-panel {
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 4px 12px -4px rgba(11,24,41,0.06);
-    margin-top: 1.25rem;
+/* ── Benchmark ── */
+.cmp {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--glt); border: 1px solid var(--grim);
+    border-radius: 0.6rem; padding: 0.6rem 0.95rem; margin-top: 0.65rem;
 }
-.perks-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-.perks-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.55rem;
-}
-.perk-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.78rem;
-    color: #334155;
-    font-weight: 500;
-}
-.perk-icon { font-size: 1rem; }
+.cmp-lbl { font-size: 0.66rem; font-weight: 600; color: #065F46; margin-bottom: 0.05rem; }
+.cmp-old { font-size: 0.76rem; color: #64748B; text-decoration: line-through; font-weight: 600; }
+.cmp-save { font-size: 0.85rem; font-weight: 800; color: var(--green); }
 
-/* ── Comparison bar ── */
-.compare-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #F8FFF8;
-    border: 1px solid #BBF7D0;
-    border-radius: 0.75rem;
-    padding: 0.9rem 1.25rem;
-    margin-top: 1.25rem;
+/* ── Perks ── */
+.perks {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 0.6rem; padding: 0.75rem 0.95rem; margin-top: 0.65rem;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.04);
 }
-.compare-label { font-size: 0.78rem; color: var(--slate); font-weight: 600; }
-.compare-val-good { font-size: 0.88rem; font-weight: 800; color: var(--success); }
-.compare-val-cross { font-size: 0.88rem; font-weight: 700; color: #94A3B8; text-decoration: line-through; }
+.perks-ttl { font-size: 0.72rem; font-weight: 700; color: var(--navy); margin-bottom: 0.5rem; }
+.perks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.38rem; }
+.perk { font-size: 0.7rem; color: var(--nsoft); font-weight: 500; }
 
-/* ── Page footer ── */
-.apex-footer {
-    text-align: center;
-    padding: 2.5rem 0 1rem;
-    font-size: 0.76rem;
-    color: var(--slate-lt);
-    border-top: 1px solid var(--border);
-    margin-top: 3rem;
+/* ── Footer ── */
+.foot {
+    text-align: center; padding: 0.85rem 0 0.2rem;
+    font-size: 0.67rem; color: #94A3B8;
+    border-top: 1px solid var(--border); margin-top: 0.85rem; line-height: 1.45;
 }
 </style>
-""", unsafe_allow_html=True)
+""")
 
-# ─────────────────────────────────────────────
-# 3.  MODEL LOADING (cached)
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# ML ENGINE
+# ─────────────────────────────────────────────────────────────────────────────
 ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "artifacts")
 
 RISK_MAP = {
@@ -412,336 +401,414 @@ RISK_MAP = {
 @st.cache_resource(show_spinner="Loading underwriting engine…")
 def load_engine():
     try:
-        m_y  = joblib.load(f"{ARTIFACTS_DIR}/model_young.joblib")
-        b_y  = joblib.load(f"{ARTIFACTS_DIR}/scaler_young.joblib")
-        m_r  = joblib.load(f"{ARTIFACTS_DIR}/model_rest.joblib")
-        b_r  = joblib.load(f"{ARTIFACTS_DIR}/scaler_rest.joblib")
-        return dict(m_y=m_y, sc_y=b_y["scaler"], cols_y=b_y["cols_to_scale"],
-                    m_r=m_r, sc_r=b_r["scaler"], cols_r=b_r["cols_to_scale"], ok=True)
+        m_y = joblib.load(f"{ARTIFACTS_DIR}/model_young.joblib")
+        b_y = joblib.load(f"{ARTIFACTS_DIR}/scaler_young.joblib")
+        m_r = joblib.load(f"{ARTIFACTS_DIR}/model_rest.joblib")
+        b_r = joblib.load(f"{ARTIFACTS_DIR}/scaler_rest.joblib")
+        return dict(
+            m_y=m_y, sc_y=b_y["scaler"], cols_y=b_y["cols_to_scale"],
+            m_r=m_r, sc_r=b_r["scaler"], cols_r=b_r["cols_to_scale"], ok=True,
+        )
     except Exception as e:
         return dict(ok=False, err=str(e))
 
 engine = load_engine()
 
-def predict(payload, young):
+def predict(payload: dict, young: bool) -> float:
     df = pd.DataFrame([payload])
     df.columns = df.columns.str.replace(" ", "_").str.lower()
     df["number_of_dependants"] = abs(df["number_of_dependants"])
-
-    med = str(payload.get("medical_history", "none")).lower()
-    parts = [p.strip() for p in med.split("&")]
-    df["normalized_risk_score"] = sum(RISK_MAP.get(p, 0) for p in parts) / 14.0
-
+    med   = str(payload.get("medical_history", "none")).lower()
+    parts = [x.strip() for x in med.split("&")]
+    df["normalized_risk_score"] = sum(RISK_MAP.get(x, 0) for x in parts) / 14.0
     df["insurance_plan"] = {"Bronze": 1, "Silver": 2, "Gold": 3}.get(payload["insurance_plan"], 2)
-    df["income_level"] = 1
-
-    df["gender_Male"]                    = int(payload["gender"] == "Male")
-    df["region_Northwest"]               = int(payload["region"] == "Northwest")
-    df["region_Southeast"]               = int(payload["region"] == "Southeast")
-    df["region_Southwest"]               = int(payload["region"] == "Southwest")
-    df["marital_status_Unmarried"]       = int(payload["marital_status"] == "Unmarried")
-    df["bmi_category_Obesity"]           = int(payload["bmi_category"] == "Obesity")
-    df["bmi_category_Overweight"]        = int(payload["bmi_category"] == "Overweight")
-    df["bmi_category_Underweight"]       = int(payload["bmi_category"] == "Underweight")
-    df["smoking_status_Occasional"]      = int(payload["smoking_status"] == "Occasional")
-    df["smoking_status_Regular"]         = int(payload["smoking_status"] == "Regular")
-    df["employment_status_Salaried"]     = int(payload["employment_status"] == "Salaried")
-    df["employment_status_Self-Employed"]= int(payload["employment_status"] == "Self-Employed")
-
-    sc   = engine["sc_y"]   if young else engine["sc_r"]
+    df["income_level"]   = 1
+    df["gender_Male"]                     = int(payload["gender"] == "Male")
+    df["region_Northwest"]                = int(payload["region"] == "Northwest")
+    df["region_Southeast"]                = int(payload["region"] == "Southeast")
+    df["region_Southwest"]                = int(payload["region"] == "Southwest")
+    df["marital_status_Unmarried"]        = int(payload["marital_status"] == "Unmarried")
+    df["bmi_category_Obesity"]            = int(payload["bmi_category"] == "Obesity")
+    df["bmi_category_Overweight"]         = int(payload["bmi_category"] == "Overweight")
+    df["bmi_category_Underweight"]        = int(payload["bmi_category"] == "Underweight")
+    df["smoking_status_Occasional"]       = int(payload["smoking_status"] == "Occasional")
+    df["smoking_status_Regular"]          = int(payload["smoking_status"] == "Regular")
+    df["employment_status_Salaried"]      = int(payload["employment_status"] == "Salaried")
+    df["employment_status_Self-Employed"] = int(payload["employment_status"] == "Self-Employed")
+    sc   = engine["sc_y"] if young else engine["sc_r"]
     cols = engine["cols_y"] if young else engine["cols_r"]
     df[cols] = sc.transform(df[cols])
     X = df.drop(columns=["income_level"])
     feat_order = [
-        "age","number_of_dependants","income_lakhs","insurance_plan",
-        "genetical_risk","normalized_risk_score","gender_Male",
-        "region_Northwest","region_Southeast","region_Southwest",
-        "marital_status_Unmarried","bmi_category_Obesity",
-        "bmi_category_Overweight","bmi_category_Underweight",
-        "smoking_status_Occasional","smoking_status_Regular",
-        "employment_status_Salaried","employment_status_Self-Employed",
+        "age", "number_of_dependants", "income_lakhs", "insurance_plan",
+        "genetical_risk", "normalized_risk_score", "gender_Male",
+        "region_Northwest", "region_Southeast", "region_Southwest",
+        "marital_status_Unmarried", "bmi_category_Obesity",
+        "bmi_category_Overweight", "bmi_category_Underweight",
+        "smoking_status_Occasional", "smoking_status_Regular",
+        "employment_status_Salaried", "employment_status_Self-Employed",
     ]
     m = engine["m_y"] if young else engine["m_r"]
     return float(m.predict(X[feat_order])[0])
 
-# ─────────────────────────────────────────────
-# 4.  NAV BAR (with inline SVG logo)
-# ─────────────────────────────────────────────
-SHIELD_SVG = """
-<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M18 3L5 8.5V18C5 25.18 10.74 31.94 18 33C25.26 31.94 31 25.18 31 18V8.5L18 3Z"
-        fill="#C9973B" fill-opacity="0.18"/>
-  <path d="M18 3L5 8.5V18C5 25.18 10.74 31.94 18 33C25.26 31.94 31 25.18 31 18V8.5L18 3Z"
-        stroke="#C9973B" stroke-width="1.75" stroke-linejoin="round"/>
-  <path d="M13 18L16.5 21.5L23 15" stroke="#E8BE6C" stroke-width="2.2"
-        stroke-linecap="round" stroke-linejoin="round"/>
-</svg>"""
-
-st.markdown(f"""
-<div class="apex-nav">
-  <a class="apex-logo" href="#">
-    {SHIELD_SVG}
-    <span class="apex-logo-text">Apex<span>Shield</span></span>
-  </a>
-  <div class="apex-nav-links">
-    <span class="nav-active">Get Quote</span>
-    <span>Our Plans</span>
-    <span>Claims</span>
-    <span>About</span>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────
-# 5.  HERO
-# ─────────────────────────────────────────────
-st.markdown("""
-<div class="apex-hero">
-  <h1>Your personalised health cover<br>quote, <em>in seconds</em></h1>
-  <p>Answer a few quick questions and our AI-powered underwriting
-     engine computes a fair, transparent premium — no callbacks, no paperwork.</p>
-  <div class="trust-badges">
-    <span class="trust-badge"><span class="dot">●</span> IRDAI Compliant</span>
-    <span class="trust-badge">🔒 256-bit Encrypted</span>
-    <span class="trust-badge">⚡ 14,000+ Network Hospitals</span>
-    <span class="trust-badge">🏆 99.7% Claim Settlement</span>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────
-# 6.  PRESET QUICK PROFILES
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# PROFILES
+# ─────────────────────────────────────────────────────────────────────────────
 PROFILES = {
-    "🌱 Young Individual": dict(age=22, gender="Female", dependants=0, income=10.0,
+    "🌱 Young (22y)": dict(
+        age=22, gender="Female", dependants=0, income=10.0,
         marital="Unmarried", region="Northwest", bmi="Normal", smoking="No",
-        medical="No Disease", gr=1, plan="Silver", emp="Salaried"),
-    "⚠️ Young + Family History": dict(age=24, gender="Male", dependants=0, income=14.0,
+        medical="No Disease", gr=1, plan="Silver", emp="Salaried",
+    ),
+    "🧬 Young+Risk (24y)": dict(
+        age=24, gender="Male", dependants=0, income=14.0,
         marital="Unmarried", region="Northeast", bmi="Normal", smoking="No",
-        medical="No Disease", gr=4, plan="Silver", emp="Salaried"),
-    "💼 Family Breadwinner": dict(age=42, gender="Male", dependants=2, income=32.0,
+        medical="No Disease", gr=4, plan="Silver", emp="Salaried",
+    ),
+    "💼 Family (42y)": dict(
+        age=42, gender="Male", dependants=2, income=32.0,
         marital="Married", region="Southeast", bmi="Overweight", smoking="Occasional",
-        medical="High Blood Pressure", gr=2, plan="Gold", emp="Salaried"),
-    "🩺 Senior Applicant": dict(age=57, gender="Female", dependants=1, income=22.0,
+        medical="High Blood Pressure", gr=2, plan="Gold", emp="Salaried",
+    ),
+    "🩺 Senior (57y)": dict(
+        age=57, gender="Female", dependants=1, income=22.0,
         marital="Married", region="Southwest", bmi="Obesity", smoking="Regular",
-        medical="Diabetes & Heart Disease", gr=3, plan="Gold", emp="Self-Employed"),
+        medical="Diabetes & Heart Disease", gr=3, plan="Gold", emp="Self-Employed",
+    ),
 }
 
-if "prof" not in st.session_state:
-    st.session_state.prof = PROFILES["🌱 Young Individual"]
+# ── Initialize widget keys in session_state once ──────────────────────────────
+_DEF = PROFILES["🌱 Young (22y)"]
+_INIT = {
+    "w_age":     _DEF["age"],
+    "w_gender":  _DEF["gender"],
+    "w_marital": _DEF["marital"],
+    "w_deps":    _DEF["dependants"],
+    "w_income":  float(_DEF["income"]),
+    "w_region":  _DEF["region"],
+    "w_bmi":     _DEF["bmi"],
+    "w_smoking": _DEF["smoking"],
+    "w_emp":     _DEF["emp"],
+    "w_medical": _DEF["medical"],
+    "w_gr":      int(_DEF["gr"]),
+    "w_plan":    _DEF["plan"],
+    "last_result": None,
+}
+for _k, _v in _INIT.items():
+    if _k not in st.session_state:
+        st.session_state[_k] = _v
 
-st.markdown('<p class="preset-label">✦ Quick-fill from a sample profile</p>', unsafe_allow_html=True)
-pc = st.columns(4)
-for idx, (label, data) in enumerate(PROFILES.items()):
-    if pc[idx].button(label, use_container_width=True):
-        st.session_state.prof = data
+# ─────────────────────────────────────────────────────────────────────────────
+# HEADER
+# ─────────────────────────────────────────────────────────────────────────────
+html("""
+<div class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-icon">🛡️</div>
+    <div>
+      <div class="hdr-title">Apex<b>Shield</b></div>
+      <div class="hdr-sub">Dual-Cohort Actuarial ML Underwriting Engine v2.0</div>
+    </div>
+  </div>
+  <div class="hdr-badges">
+    <span class="hbadge live"><span class="ldot"></span> ML Active</span>
+    <span class="hbadge">IRDAI Compliant</span>
+    <span class="hbadge">Young R² 98.87%</span>
+    <span class="hbadge">Adult R² 99.71%</span>
+  </div>
+</div>
+""")
 
-p = st.session_state.prof
+# ─────────────────────────────────────────────────────────────────────────────
+# PRESET BUTTONS — write into widget keys, then rerun
+# ─────────────────────────────────────────────────────────────────────────────
+html('<div class="preset-row"><p class="preset-lbl">⚡ Quick-fill sample profile:</p></div>')
+pcols = st.columns(4)
+for i, (lbl, dat) in enumerate(PROFILES.items()):
+    if pcols[i].button(lbl, use_container_width=True, key=f"preset_{i}"):
+        st.session_state["w_age"]     = dat["age"]
+        st.session_state["w_gender"]  = dat["gender"]
+        st.session_state["w_marital"] = dat["marital"]
+        st.session_state["w_deps"]    = dat["dependants"]
+        st.session_state["w_income"]  = float(dat["income"])
+        st.session_state["w_region"]  = dat["region"]
+        st.session_state["w_bmi"]     = dat["bmi"]
+        st.session_state["w_smoking"] = dat["smoking"]
+        st.session_state["w_emp"]     = dat["emp"]
+        st.session_state["w_medical"] = dat["medical"]
+        st.session_state["w_gr"]      = int(dat["gr"])
+        st.session_state["w_plan"]    = dat["plan"]
+        st.session_state["last_result"] = None
+        st.rerun()
 
-# ─────────────────────────────────────────────
-# 7.  MAIN 2-COLUMN LAYOUT
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYOUT
+# ─────────────────────────────────────────────────────────────────────────────
 left, right = st.columns([11, 9], gap="large")
 
-# ── LEFT: FORM ──────────────────────────────
+# ═══════════════════════════════════════════════════════════════════
+# LEFT — FORM
+# ═══════════════════════════════════════════════════════════════════
 with left:
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    cur_age    = st.session_state["w_age"]
+    young_prev = int(cur_age) <= 25
+    ctag_cls   = "ctag-y" if young_prev else "ctag-a"
+    ctag_lbl   = "Young ≤ 25y" if young_prev else "Adult > 25y"
 
-    with st.form("quote_form", border=False):
+    with st.form("qf", border=False):
 
-        # ── Section 1 ─────────────────────
-        st.markdown("""<div class="form-section-title">
-            <span class="section-pill">1</span>
-            <span class="section-title-text">Personal Details</span>
-        </div>""", unsafe_allow_html=True)
+        # ── Section 1: Demographics ────────────────────────────────
+        html(f"""
+        <div class="sec">
+          <span class="sec-num">1</span>
+          <span class="sec-title">Personal &amp; Demographics</span>
+          <span class="ctag {ctag_cls}">{ctag_lbl}</span>
+        </div>""")
 
-        c1, c2 = st.columns(2)
-        age     = c1.number_input("Age", 18, 85, int(p["age"]), help="Minimum age: 18 years")
-        gender  = c2.selectbox("Gender", ["Female", "Male"],
-                               index=0 if p["gender"] == "Female" else 1)
+        c1, c2, c3 = st.columns(3)
+        age     = c1.number_input("Age", min_value=18, max_value=85, key="w_age")
+        gender  = c2.selectbox("Gender", ["Female", "Male"], key="w_gender")
+        marital = c3.selectbox("Marital", ["Unmarried", "Married"], key="w_marital")
 
-        c3, c4 = st.columns(2)
-        marital = c3.selectbox("Marital Status", ["Unmarried", "Married"],
-                               index=0 if p["marital"] == "Unmarried" else 1)
-        deps    = c4.selectbox("Dependants to Cover", [0, 1, 2, 3, 4, 5],
-                               index=min(p["dependants"], 5),
-                               format_func=lambda x: "None – just me" if x == 0 else f"{x} dependant{'s' if x > 1 else ''}")
+        c4, c5, c6 = st.columns(3)
+        deps   = c4.selectbox("Dependants", [0, 1, 2, 3, 4, 5],
+                              format_func=lambda x: "None" if x == 0 else str(x),
+                              key="w_deps")
+        income = c5.number_input("Income (₹ Lakhs/yr)", min_value=0.5, max_value=250.0,
+                                 step=1.0, format="%.1f", key="w_income")
+        region = c6.selectbox("Region",
+                              ["Northwest", "Northeast", "Southeast", "Southwest"],
+                              key="w_region")
 
-        c5, c6 = st.columns(2)
-        income  = c5.slider("Annual Income (₹ Lakhs)", 1.0, 80.0,
-                             float(p["income"]), step=1.0, format="₹%g L")
-        region  = c6.selectbox("Region", ["Northwest", "Northeast", "Southeast", "Southwest"],
-                               index=["Northwest","Northeast","Southeast","Southwest"].index(p["region"]))
+        # ── Section 2: Health & Lifestyle ──────────────────────────
+        html("""
+        <div class="sec sec-mt">
+          <span class="sec-num">2</span>
+          <span class="sec-title">Health &amp; Lifestyle</span>
+        </div>""")
 
-        # ── Section 2 ─────────────────────
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("""<div class="form-section-title">
-            <span class="section-pill">2</span>
-            <span class="section-title-text">Health & Lifestyle</span>
-        </div>""", unsafe_allow_html=True)
+        c7, c8, c9 = st.columns(3)
+        bmi     = c7.selectbox("BMI Category",
+                               ["Normal", "Overweight", "Obesity", "Underweight"],
+                               key="w_bmi")
+        smoking = c8.selectbox("Smoking Status",
+                               ["No", "Occasional", "Regular"],
+                               format_func=lambda x: {"No": "Non-Smoker",
+                                                      "Occasional": "Occasional",
+                                                      "Regular": "Regular Smoker"}[x],
+                               key="w_smoking")
+        emp     = c9.selectbox("Employment",
+                               ["Salaried", "Self-Employed", "Freelancer"],
+                               key="w_emp")
 
-        c7, c8 = st.columns(2)
-        bmi_opts = ["Normal", "Overweight", "Obesity", "Underweight"]
-        bmi     = c7.selectbox("Body Profile (BMI)", bmi_opts,
-                               index=bmi_opts.index(p["bmi"]))
-        smk_opts = ["No", "Occasional", "Regular"]
-        smoking  = c8.selectbox("Tobacco Use", smk_opts,
-                                index=smk_opts.index(p["smoking"]),
-                                format_func=lambda x: {"No":"Non-Smoker","Occasional":"Occasional","Regular":"Regular Smoker"}[x])
+        cm1, cm2 = st.columns([1, 1])
+        with cm1:
+            medical = st.selectbox(
+                "Pre-existing Conditions",
+                ["No Disease", "Diabetes", "High Blood Pressure", "Thyroid", "Heart Disease",
+                 "Diabetes & High Blood Pressure", "Diabetes & Heart Disease",
+                 "High Blood Pressure & Heart Disease"],
+                key="w_medical",
+            )
+        with cm2:
+            gr = st.slider("Genetic Risk (0 = None → 5 = High)",
+                           min_value=0, max_value=5, step=1, key="w_gr")
+            GR_META = {
+                0: ("No family risk",                 "#047857", "#ECFDF5", "#A7F3D0"),
+                1: ("Minimal — distant relatives",     "#047857", "#ECFDF5", "#A7F3D0"),
+                2: ("Mild hereditary patterns",        "#1D4ED8", "#EFF6FF", "#BFDBFE"),
+                3: ("Moderate — parent chronic",       "#B45309", "#FFFBEB", "#FDE68A"),
+                4: ("Elevated — cardiovascular fam.",  "#C2410C", "#FFF7ED", "#FED7AA"),
+                5: ("High — multiple direct rel.",     "#B91C1C", "#FEF2F2", "#FECACA"),
+            }
+            glbl, gcol, gbg, gbdr = GR_META[gr]
+            html(f'<span class="gr-strip" style="background:{gbg};border:1px solid {gbdr};color:{gcol};">'
+                 f'Level {gr} · {glbl}</span>')
 
-        med_opts = [
-            "No Disease","Diabetes","High Blood Pressure","Thyroid","Heart Disease",
-            "Diabetes & High Blood Pressure","Diabetes & Heart Disease","High Blood Pressure & Heart Disease",
-        ]
-        medical = st.selectbox("Known Pre-existing Conditions", med_opts,
-                               index=med_opts.index(p["medical"]) if p["medical"] in med_opts else 0)
+        # ── Section 3: Coverage Tier ───────────────────────────────
+        html("""
+        <div class="sec sec-mt">
+          <span class="sec-num">3</span>
+          <span class="sec-title">Choose Coverage Tier</span>
+        </div>""")
 
-        gr_labels = {
-            0: "0  –  No family illness history",
-            1: "1  –  Minor, distant relatives only",
-            2: "2  –  Mild hereditary patterns",
-            3: "3  –  Moderate  (parent with chronic illness)",
-            4: "4  –  Elevated  (cardiovascular in close family)",
-            5: "5  –  High  (multiple direct relatives affected)",
-        }
-        gr = st.select_slider("Family Health History", options=[0,1,2,3,4,5],
-                              value=int(p["gr"]), format_func=lambda x: gr_labels[x])
+        plan = st.radio(
+            "Coverage Tier",
+            ["Bronze", "Silver", "Gold"],
+            horizontal=True,
+            format_func=lambda x: {
+                "Bronze": "🥉 Bronze · Essential",
+                "Silver": "🥈 Silver · Comprehensive ★",
+                "Gold":   "🥇 Gold · Premium Global",
+            }[x],
+            key="w_plan",
+            label_visibility="collapsed",
+        )
 
-        emp_opts = ["Salaried", "Self-Employed", "Freelancer"]
-        emp = st.selectbox("Employment Type", emp_opts,
-                           index=emp_opts.index(p["emp"]) if p["emp"] in emp_opts else 0)
-
-        # ── Section 3 ─────────────────────
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("""<div class="form-section-title">
-            <span class="section-pill">3</span>
-            <span class="section-title-text">Choose Your Coverage Plan</span>
-        </div>""", unsafe_allow_html=True)
-
-        plan = st.radio("Coverage Tier", ["Bronze", "Silver", "Gold"],
-                        index=["Bronze","Silver","Gold"].index(p["plan"]),
-                        horizontal=True,
-                        format_func=lambda x: {
-                            "Bronze": "🥉  Bronze  ·  Essential",
-                            "Silver": "🥈  Silver  ·  Comprehensive  ★",
-                            "Gold":   "🥇  Gold    ·  Premium Global",
-                        }[x])
-
-        st.markdown("<br>", unsafe_allow_html=True)
+        html("<div style='height:0.35rem'></div>")
         submitted = st.form_submit_button(
-            "  Get My Instant Quote  →",
+            "⚡  Calculate Instant Actuarial Quote",
             type="primary",
             use_container_width=True,
         )
 
-    st.markdown('</div>', unsafe_allow_html=True)   # close .panel
+    # ── Result strip — directly below submit button ─────────────────
+    result_ph = st.empty()
 
-# ── RIGHT: LIVE QUOTE CARD ───────────────────
+    if submitted:
+        if not engine.get("ok"):
+            result_ph.error(f"Engine error: {engine.get('err')}")
+        else:
+            with st.spinner("Calculating actuarial quote…"):
+                _payload = dict(
+                    age=age, gender=gender, region=region,
+                    marital_status=marital, number_of_dependants=deps,
+                    bmi_category=bmi, smoking_status=smoking,
+                    employment_status=emp, income_lakhs=income,
+                    medical_history=medical, insurance_plan=plan, genetical_risk=gr,
+                )
+                _young  = age <= 25
+                _raw    = predict(_payload, _young)
+                _annual = max(round(_raw), 3000)
+                _mo     = round(_annual / 12)
+                st.session_state["last_result"] = {
+                    "annual": _annual, "monthly": _mo, "young": _young,
+                    "plan": plan, "bmi": bmi, "smoking": smoking, "gr": gr,
+                    **_payload,
+                }
+            result_ph.markdown(
+                f'<div class="result-strip">'
+                f'<span>✅ Quote Calculated &amp; Ready</span>'
+                f'<span class="result-amt">₹{_annual:,} / yr &nbsp;·&nbsp; ₹{_mo:,} / mo</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            st.toast(f"✅ Quote Ready: ₹{_annual:,} / yr (approx. ₹{_mo:,} / mo)", icon="🛡️")
+
+    elif st.session_state["last_result"]:
+        r = st.session_state["last_result"]
+        result_ph.markdown(
+            f'<div class="result-strip">'
+            f'<span>✅ Current Saved Quote</span>'
+            f'<span class="result-amt">₹{r["annual"]:,} / yr &nbsp;·&nbsp; ₹{r["monthly"]:,} / mo</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+# ═══════════════════════════════════════════════════════════════════
+# RIGHT — LIVE QUOTE CARD
+# ═══════════════════════════════════════════════════════════════════
 with right:
     if not engine.get("ok"):
         st.error(f"Engine error: {engine.get('err')}")
         st.stop()
 
-    # Always compute (form re-runs on submit automatically)
-    payload = dict(
-        age=age, gender=gender, region=region, marital_status=marital,
-        number_of_dependants=deps, bmi_category=bmi, smoking_status=smoking,
-        employment_status=emp, income_lakhs=income,
-        medical_history=medical, insurance_plan=plan, genetical_risk=gr,
+    res = st.session_state["last_result"]
+    if res:
+        # Use submitted result
+        annual      = res["annual"]
+        monthly     = res["monthly"]
+        young_c     = res["young"]
+        plan_r      = res["plan"]
+        bmi_r       = res["bmi"]
+        smoke_r     = res["smoking"]
+        gr_r        = res["gr"]
+        card_cls    = "fresh"
+    else:
+        # Live preview from current widget session_state
+        _pa = dict(
+            age     = st.session_state["w_age"],
+            gender  = st.session_state["w_gender"],
+            region  = st.session_state["w_region"],
+            marital_status       = st.session_state["w_marital"],
+            number_of_dependants = st.session_state["w_deps"],
+            bmi_category         = st.session_state["w_bmi"],
+            smoking_status       = st.session_state["w_smoking"],
+            employment_status    = st.session_state["w_emp"],
+            income_lakhs         = st.session_state["w_income"],
+            medical_history      = st.session_state["w_medical"],
+            insurance_plan       = st.session_state["w_plan"],
+            genetical_risk       = st.session_state["w_gr"],
+        )
+        young_c  = int(_pa["age"]) <= 25
+        _raw     = predict(_pa, young_c)
+        annual   = max(round(_raw), 3000)
+        monthly  = round(annual / 12)
+        plan_r   = _pa["insurance_plan"]
+        bmi_r    = _pa["bmi_category"]
+        smoke_r  = _pa["smoking_status"]
+        gr_r     = _pa["genetical_risk"]
+        card_cls = ""
+
+    # Cost breakdown
+    pf         = {"Bronze": 0.78, "Silver": 1.0, "Gold": 1.32}[plan_r]
+    base_calc  = int(annual / pf * 0.82)
+    plan_up    = max(int(annual - base_calc * pf), 400)
+    life_up    = (800 if bmi_r == "Obesity" else 350 if bmi_r == "Overweight" else 0) + \
+                 (700 if smoke_r == "Regular" else 280 if smoke_r == "Occasional" else 0)
+    hist_up    = gr_r * 420 if young_c else gr_r * 180
+    base_cover = max(annual - plan_up - life_up - hist_up, 1800)
+
+    cohort_tag = "Young Cohort (≤ 25y)" if young_c else "Adult Cohort (> 25y)"
+    note = (
+        "Young Pipeline: genetic & early-career risks calibrated for fair pricing."
+        if young_c else
+        "Adult Pipeline: clinical history, BMI, lifestyle & tier drive this estimate."
     )
-    young = age <= 25
-    raw   = predict(payload, young)
-    annual = max(round(raw), 3000)
-    monthly = round(annual / 12)
 
-    # Price breakdown (simplified, user-facing)
-    plan_factor = {"Bronze": 0.78, "Silver": 1.0, "Gold": 1.32}[plan]
-    base    = int(annual / plan_factor * 0.82)
-    plan_up = int(annual - base * plan_factor)
-    life_up = (800 if bmi == "Obesity" else (350 if bmi == "Overweight" else 0)) + \
-              (700 if smoking == "Regular" else (280 if smoking == "Occasional" else 0))
-    hist_up = gr * 420 if young else gr * 180
-    base    = max(annual - plan_up - life_up - hist_up, 1800)
+    html(f"""
+    <div class="q-card {card_cls}">
+      <div class="q-top">
+        <span class="q-lbl">Actuarial Underwriting Result</span>
+        <span class="q-badge">{cohort_tag}</span>
+      </div>
+      <div class="q-amount"><sup>₹</sup>{annual:,}</div>
+      <div class="q-mo">per year &nbsp;·&nbsp; approx. <b>₹{monthly:,}</b> / month</div>
+      <hr class="q-div">
+      <div class="q-row"><span>Base Hospitalisation</span><b>₹{base_cover:,}</b></div>
+      <div class="q-row"><span>{plan_r} Tier Loading</span><b>+ ₹{plan_up:,}</b></div>
+      <div class="q-row"><span>Lifestyle / BMI Loading</span><b>{"+ ₹{:,}".format(life_up) if life_up else "₹ 0"}</b></div>
+      <div class="q-row"><span>Family History Loading</span><b>{"+ ₹{:,}".format(hist_up) if hist_up else "₹ 0"}</b></div>
+      <div class="q-note"><strong>Why this price?</strong> {note}</div>
+    </div>
+    """)
 
-    # Cohort routing note (user-friendly)
-    note = ("Tailored pricing for applicants under 25 — family health history "
-            "plays a key role in determining your premium." if young else
-            "Your quote factors in age, clinical history, lifestyle, and "
-            "selected coverage tier.")
-
-    st.markdown(f"""
-<div class="quote-card">
-  <div class="quote-eyebrow">
-    <span class="quote-eyebrow-label">Your Personalised Quote</span>
-    <span class="quote-status-dot"><span class="status-dot"></span> Live Estimate</span>
-  </div>
-
-  <div class="quote-main-amount"><sup>₹</sup>{annual:,}</div>
-  <div class="quote-per">per year &nbsp;·&nbsp; approx. <strong style="color:rgba(255,255,255,0.85)">₹{monthly:,}</strong> / month</div>
-
-  <hr class="quote-divider">
-
-  <div class="quote-line">
-    <span>Base hospitalisation cover</span>
-    <span class="quote-line-val">₹{base:,}</span>
-  </div>
-  <div class="quote-line">
-    <span>{plan} plan upgrade</span>
-    <span class="quote-line-val">+ ₹{plan_up:,}</span>
-  </div>
-  <div class="quote-line">
-    <span>Lifestyle / BMI loading</span>
-    <span class="quote-line-val">{"+ ₹{:,}".format(life_up) if life_up else "₹ 0"}</span>
-  </div>
-  <div class="quote-line">
-    <span>Family health history</span>
-    <span class="quote-line-val">{"+ ₹{:,}".format(hist_up) if hist_up else "₹ 0"}</span>
-  </div>
-
-  <div class="quote-footer">
-    <strong>Why this price?</strong> &nbsp;{note}
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-    # Comparison saving pill
-    baseline = int(annual * (1.28 if young and gr >= 3 else 1.06))
+    baseline = int(annual * (1.28 if young_c and gr_r >= 3 else 1.12))
     saving   = baseline - annual
     if saving > 0:
-        st.markdown(f"""
-<div class="compare-row">
-  <div>
-    <div class="compare-label">Industry Standard Estimate</div>
-    <div class="compare-val-cross">₹{baseline:,} / yr</div>
-  </div>
-  <div style="text-align:right">
-    <div class="compare-label">You Save with ApexShield</div>
-    <div class="compare-val-good">− ₹{saving:,} / yr</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+        html(f"""
+        <div class="cmp">
+          <div>
+            <div class="cmp-lbl">Industry Estimate</div>
+            <div class="cmp-old">₹{baseline:,} / yr</div>
+          </div>
+          <div style="text-align:right">
+            <div class="cmp-lbl" style="color:#047857">AI Advantage</div>
+            <div class="cmp-save">Save ₹{saving:,} / yr</div>
+          </div>
+        </div>
+        """)
 
-    # What's included
-    st.markdown("""
-<div class="perks-panel">
-  <div class="perks-title">✦ &nbsp;What's included in every plan</div>
-  <div class="perks-grid">
-    <div class="perk-item"><span class="perk-icon">🏥</span> 14,000+ Network Hospitals</div>
-    <div class="perk-item"><span class="perk-icon">⚡</span> Cashless Claim in 30 mins</div>
-    <div class="perk-item"><span class="perk-icon">🩺</span> Annual Free Health Check-up</div>
-    <div class="perk-item"><span class="perk-icon">💊</span> Pre & Post Hospitalisation</div>
-    <div class="perk-item"><span class="perk-icon">🚑</span> Emergency Ambulance Cover</div>
-    <div class="perk-item"><span class="perk-icon">🧘</span> Mental Wellness Sessions</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+    html("""
+    <div class="perks">
+      <div class="perks-ttl">✦ Included in every plan</div>
+      <div class="perks-grid">
+        <div class="perk">🏥 14,000+ Hospitals</div>
+        <div class="perk">⚡ Cashless in 30 min</div>
+        <div class="perk">🩺 Annual Health Check</div>
+        <div class="perk">💊 Pre &amp; Post Care</div>
+        <div class="perk">🚑 Ambulance Cover</div>
+        <div class="perk">🧘 Mental Wellness</div>
+      </div>
+    </div>
+    """)
 
-# ─────────────────────────────────────────────
-# 8.  FOOTER
-# ─────────────────────────────────────────────
-st.markdown("""
-<div class="apex-footer">
-  ApexShield Life &amp; Health Insurance Co. · IRDAI Reg. No. 142 · CIN: U66010MH2024PLC000000<br>
-  Premiums are indicative, subject to underwriting review. Quotes valid for 30 days.
+# ─────────────────────────────────────────────────────────────────────────────
+# FOOTER
+# ─────────────────────────────────────────────────────────────────────────────
+html("""
+<div class="foot">
+  ApexShield Life &amp; Health Insurance · IRDAI Reg. No. 142 · ML Engine v2.0<br>
+  Premiums are actuarial estimates for illustrative purposes. Subject to underwriting review.
 </div>
-""", unsafe_allow_html=True)
+""")
